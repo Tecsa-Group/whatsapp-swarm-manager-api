@@ -52,9 +52,9 @@ func CreateInstance(w http.ResponseWriter, r *http.Request) {
 	}
 
 	instance := &models.Instance{
-		Name:      input.Name,
-		Status:    input.Status,
-		Server_id: input.Server_id,
+		Name:     input.Name,
+		Status:   input.Status,
+		ServerID: input.ServerID,
 	}
 
 	models.DB.Create(instance)
@@ -135,4 +135,22 @@ func DeleteInstance(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusNoContent)
 	json.NewEncoder(w).Encode(instance)
+}
+
+func GetInstancesByServerID(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	// Extrai o ID do servidor da solicitação
+	vars := mux.Vars(r)
+	serverID := vars["server_id"]
+
+	// Realiza a consulta no banco de dados para obter instâncias com o ID do servidor fornecido
+	var instances []models.Instance
+	if err := models.DB.Preload("Server").Where("server_id = ?", serverID).Find(&instances).Error; err != nil {
+		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to retrieve instances by server ID")
+		return
+	}
+
+	// Responde com as instâncias encontradas
+	json.NewEncoder(w).Encode(instances)
 }
