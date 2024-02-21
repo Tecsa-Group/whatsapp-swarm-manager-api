@@ -52,11 +52,9 @@ func CreateInstance(w http.ResponseWriter, r *http.Request) {
 	}
 
 	instance := &models.Instance{
-		ID:        input.ID,
 		Name:      input.Name,
 		Status:    input.Status,
 		Server_id: input.Server_id,
-		UpdatedAt: input.UpdatedAt,
 	}
 
 	models.DB.Create(instance)
@@ -68,9 +66,9 @@ func CreateInstance(w http.ResponseWriter, r *http.Request) {
 }
 
 type UpdateInstanceModel struct {
-	Name      string     `json:"name" validate:"optional"`
-	Status    string     `json:"status" validate:"optional"`
-	UpdatedAt *time.Time `json:"updated_at" validate:"optional"`
+	Name      string     `json:"name" validate:"omitempty"`
+	Status    string     `json:"status" validate:"omitempty"`
+	UpdatedAt *time.Time `json:"updated_at" validate:"omitempty"`
 }
 
 func UpdateInstance(w http.ResponseWriter, r *http.Request) {
