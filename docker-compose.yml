@@ -9,9 +9,9 @@ services:
       - postgres
     environment:
       POSTGRES_HOST: postgres
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: postgres
+      POSTGRES_USER: tecsagroup
+      POSTGRES_PASSWORD: tecsagroup
+      POSTGRES_DB: postgres_tecsagroup
       POSTGRES_PORT: 5432
     networks:
       - evolution_network
@@ -29,9 +29,9 @@ services:
     image: postgres:15
     command: [postgres, --max_connections=100]
     environment:
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_USER=postgres
-      - POSTGRES_DB=postgres
+      - POSTGRES_PASSWORD=tecsagroup
+      - POSTGRES_USER=tecsagroup
+      - POSTGRES_DB=postgres_tecsagroup
     networks:
       - evolution_network
     ports:
