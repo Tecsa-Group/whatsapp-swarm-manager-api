@@ -26,7 +26,7 @@ RUN apk update && apk add ca-certificates && rm -rf /var/cache/apk/*
 COPY --from=builder /app/main /usr/local/bin/main
 
 # Exponha a porta em que a aplicação vai rodar
-EXPOSE 8080
+EXPOSE 8088
 
 # Comando para executar a aplicação
 CMD ["main"]
