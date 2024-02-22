@@ -21,4 +21,4 @@ RUN go build -o main .
 EXPOSE 8088
 
 # Comando para executar a aplicação
-CMD ["main"]
+CMD ["./main"]
