@@ -2,13 +2,13 @@ version: '3'
 
 services:
   app:
-    image: golang:1.22.0-alpine  # Usando a imagem oficial do Golang
+    image: felipe070700/whatsapp-manager:03
     ports:
       - "8088:8088"
     depends_on:
       - postgres
     environment:
-      POSTGRES_HOST: db
+      POSTGRES_HOST: postgres
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: postgres
