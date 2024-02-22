@@ -2,19 +2,20 @@ version: '3'
 
 services:
   app:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     ports:
       - "8088:8088"
-    # depends_on:
-    #   - db
+    depends_on:
+      - postgres
     environment:
-      POSTGRES_HOST: 5.161.65.255
-      POSTGRES_USER: tecsagroup
-      POSTGRES_PASSWORD: tecsagroup
-      POSTGRES_DB: postgres_tecsagroup
+      POSTGRES_HOST: db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
       POSTGRES_PORT: 5432
     networks:
-      - app_network
       - traefik_public
     deploy:
       mode: replicated
@@ -26,37 +27,34 @@ services:
         limits:
           cpus: "1"
           memory: 1024M
-#   postgres:
-#     image: postgres:15
-#     command: [postgres, --max_connections=100]
-#     environment:
-#       - POSTGRES_PASSWORD=tecsagroup
-#       - POSTGRES_USER=tecsagroup
-#       - POSTGRES_DB=postgres_tecsagroup
-#     networks:
-#       - app_network
-#       - traefik_public
-#     ports:
-#         - 5432:5432
-#     volumes:
-#       - postgres_data:/var/lib/postgresql/data
-#     deploy:
-#       mode: replicated
-#       replicas: 1
-#       placement:
-#         constraints:
-#           - node.hostname == worker-postgres
-#       resources:
-#         limits:
-#           cpus: "1"
-#           memory: 1024M
+  postgres:
+    image: postgres:15
+    command: [postgres, --max_connections=100]
+    environment:
+      - POSTGRES_PASSWORD=tecsagroup
+      - POSTGRES_USER=tecsagroup
+      - POSTGRES_DB=postgres_tecsagroup
+    networks:
+      - evolution_network
+    ports:
+        - 5432:5432
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      resources:
+        limits:
+          cpus: "1"
+          memory: 1024M
 
-# volumes:
-#   postgres_data:
-#     external: true
+volumes:
+  postgres_data:
+    external: true
 
 networks:
-  app_network:
-    external: true
-  traefik_public:
+  	evolution_network:
     external: true
