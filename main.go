@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/felipe-tecsa/whatsapp-swarm-manager-api/controllers"
@@ -9,16 +10,29 @@ import (
 )
 
 func main() {
-	godotenv.Load()
+	err := godotenv.Load()
+	if err != nil {
+		fmt.Println("Erro ao carregar o arquivo .env:", err)
+		return
+	}
 
 	handler := controllers.New()
 
 	server := &http.Server{
-		Addr:    "localhost:8088",
+		Addr:    "0.0.0.0:5000",
 		Handler: handler,
 	}
 
-	models.ConnectDatabase()
+	// Conectar ao banco de dados
+	err = models.ConnectDatabase()
+	if err != nil {
+		fmt.Println("Erro ao conectar ao banco de dados:", err)
+		return
+	}
 
-	server.ListenAndServe()
+	err = server.ListenAndServe()
+	if err != nil {
+		fmt.Println("Erro ao iniciar o servidor:", err)
+		return
+	}
 }

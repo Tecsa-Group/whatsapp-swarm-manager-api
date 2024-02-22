@@ -18,7 +18,7 @@ COPY . .
 # Compile o binário da aplicação
 RUN go build -o main .
 
-EXPOSE 8088
+EXPOSE 5000
 
 # Comando para executar a aplicação
 CMD ["./main"]

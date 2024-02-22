@@ -1,22 +1,14 @@
-version: '3'
+version: '3.7'
 
 services:
   app:
-    # image: felipe070700/whatsapp-manager:08
-    image: golang:1.10-alpine3.7
-    container_name: go
-    volumes:
-      - "./src:/go/src/"
+    image: felipe070700/whatsapp-manager:11
     ports:
-      - "80:8088"
-    working_dir: /go/src/$whatsapp-swarm-manager-api/
-    command: go run main.go
-    # ports:
-    #   - "8088:8088"
+      - "5000:5000"
     depends_on:
       - postgres
     environment:
-      POSTGRES_HOST: postgres
+      POSTGRES_HOST: 5.161.71.166
       POSTGRES_USER: tecsagroup
       POSTGRES_PASSWORD: tecsagroup
       POSTGRES_DB: postgres_tecsagroup
