@@ -2,13 +2,13 @@ version: '3.7'
 
 services:
   app:
-    image: felipe070700/whatsapp-manager:11
+    image: felipe070700/whatsapp-manager:14
     ports:
       - "5000:5000"
     depends_on:
       - postgres
     environment:
-      POSTGRES_HOST: 5.161.71.166
+      POSTGRES_HOST: postgres
       POSTGRES_USER: tecsagroup
       POSTGRES_PASSWORD: tecsagroup
       POSTGRES_DB: postgres_tecsagroup
@@ -25,6 +25,15 @@ services:
         limits:
           cpus: "1"
           memory: 1024M
+      labels:
+        - "traefik.enable=true"
+        - "traefik.docker.network=evolution_network"
+        - "traefik.http.routers.app.rule=Host(`control.shub.tech`)"
+        - "traefik.http.routers.app.entrypoints=websecure"
+        - "traefik.http.routers.app.priority=1"
+        - "traefik.http.routers.app.tls.certresolver=le"
+        - "traefik.http.routers.app.service=app"
+        - "traefik.http.services.app.loadbalancer.server.port=5000"
   postgres:
     image: postgres:15
     command: [postgres, --max_connections=100]
