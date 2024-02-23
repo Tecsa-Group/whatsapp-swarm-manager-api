@@ -23,5 +23,9 @@ func New() http.Handler {
 	router.HandleFunc("/servers/{id}", handlers.UpdateServer).Methods("PUT")
 	router.HandleFunc("/servers/{id}", handlers.DeleteServer).Methods("DELETE")
 
+	router.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}).Methods("GET")
+
 	return router
 }
