@@ -18,8 +18,8 @@ jobs:
 
     - name: Build and push Docker image
       run: |
-        docker build -t felipe070700/whatsapp-manager:${{ github.sha }} .
-        docker push felipe070700/whatsapp-manager:${{ github.sha }}
+        docker build -t felipe070700/whatsapp-manager .
+        docker push felipe070700/whatsapp-manager
 
     - name: Send POST request
       run: |
