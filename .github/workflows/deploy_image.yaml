@@ -23,4 +23,4 @@ jobs:
 
     - name: Send POST request
       run: |
-        curl -X POST -d '{"key":"value"}' -H "Content-Type: application/json" http://5.161.71.166:9000/api/stacks/webhooks/a2c64dae-1894-4377-acc8-ed91d8cfdc70
+        curl -X POST -d '{"key":"value"}' -H "Content-Type: application/json" https://instances.shub.tech/api/stacks/webhooks/2d8145f8-45e3-46ad-a257-b107c0d9dea0

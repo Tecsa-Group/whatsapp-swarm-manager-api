@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"bytes"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -153,4 +154,59 @@ func GetInstancesByServerID(w http.ResponseWriter, r *http.Request) {
 
 	// Responde com as instâncias encontradas
 	json.NewEncoder(w).Encode(instances)
+}
+
+func CreateInstanceEvolution(w http.ResponseWriter, r *http.Request) {
+	// Verifique se o método da solicitação é POST
+	if r.Method != http.MethodPost {
+		http.Error(w, "Método não permitido", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Decodifique o corpo da solicitação JSON em uma struct InstanceRequest
+	var payload models.InstanceRequest
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		http.Error(w, "Erro ao decodificar o corpo da solicitação JSON", http.StatusBadRequest)
+		return
+	}
+
+	url := "http://evolution.shub.tech/instance/create"
+
+	payloadBytes, err := json.Marshal(payload)
+	if err != nil {
+		http.Error(w, "Erro ao codificar o payload:"+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Cria a solicitação HTTP POST com o payload JSON
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(payloadBytes))
+	if err != nil {
+		http.Error(w, "Erro ao criar a solicitação HTTP:"+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Define os cabeçalhos da solicitação
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("apikey", "e1998e715164141382c8d44434629632")
+
+	// Faz a solicitação HTTP
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		http.Error(w, "Erro ao enviar a solicitação HTTP:"+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer resp.Body.Close()
+
+	// Lê a resposta da solicitação
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		http.Error(w, "Erro ao ler a resposta da solicitação HTTP:"+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Escreve a resposta no corpo da resposta HTTP
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(resp.StatusCode)
+	w.Write(body)
 }

@@ -10,3 +10,9 @@ type Instance struct {
 	Server    Server     `gorm:"foreignkey:ServerID" json:"server"`
 	UpdatedAt *time.Time `gorm:"column:updated_at" json:"updated_at"`
 }
+
+type InstanceRequest struct {
+	InstanceName string `json:"instanceName"`
+	Token        string `json:"token"`
+	QRCode       bool   `json:"qrcode"`
+}
