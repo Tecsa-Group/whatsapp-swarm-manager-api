@@ -22,4 +22,5 @@ jobs:
         docker push felipe070700/whatsapp-manager:${{ github.sha }}
 
     - name: Send POST request
-      run: curl -X POST -d '{"key":"value"}' -H "Content-Type: application/json" http://5.161.71.166:9000/api/stacks/webhooks/a2c64dae-1894-4377-acc8-ed91d8cfdc70
+      run: |
+        curl -X POST -d '{"key":"value"}' -H "Content-Type: application/json" http://5.161.71.166:9000/api/stacks/webhooks/a2c64dae-1894-4377-acc8-ed91d8cfdc70
