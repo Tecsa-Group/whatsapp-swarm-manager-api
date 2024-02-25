@@ -13,12 +13,11 @@ func New() http.Handler {
 	router.HandleFunc("/instances", handlers.GetAllInstances).Methods("GET")
 	router.HandleFunc("/instances/{id}", handlers.GetInstance).Methods("GET")
 	router.HandleFunc("/instances-by-server-id/{server_id}", handlers.GetInstancesByServerID).Methods("GET")
-	router.HandleFunc("/instances", handlers.CreateInstance).Methods("POST")
 	router.HandleFunc("/instances/{id}", handlers.UpdateInstance).Methods("PUT")
 	router.HandleFunc("/instances/{id}", handlers.DeleteInstance).Methods("DELETE")
 
 	router.HandleFunc("/create-instance", handlers.CreateInstanceEvolution).Methods("POST")
-	// router.HandleFunc("/conect-instance/")
+	router.HandleFunc("/connect-instance/{instanceName}", handlers.ConnectInstanceEvolution).Methods("GET")
 
 	router.HandleFunc("/servers", handlers.GetAllservers).Methods("GET")
 	router.HandleFunc("/servers/{id}", handlers.GetServer).Methods("GET")

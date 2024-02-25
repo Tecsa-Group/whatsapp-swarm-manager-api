@@ -3,6 +3,7 @@ package handlers
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"time"
@@ -38,32 +39,26 @@ func GetInstance(w http.ResponseWriter, r *http.Request) {
 
 var validate *validator.Validate
 
-func CreateInstance(w http.ResponseWriter, r *http.Request) {
-	var input models.Instance
-
-	body, _ := ioutil.ReadAll(r.Body)
-	_ = json.Unmarshal(body, &input)
-
-	validate = validator.New()
+func CreateInstance(input models.Instance) error {
+	// Validação de entrada
+	validate := validator.New()
 	err := validate.Struct(input)
-
 	if err != nil {
-		utils.RespondWithError(w, http.StatusBadRequest, "Validation Error")
-		return
+		return err
 	}
 
 	instance := &models.Instance{
 		Name:     input.Name,
 		Status:   input.Status,
 		ServerID: input.ServerID,
+		Apikey:   input.Apikey,
 	}
 
-	models.DB.Create(instance)
+	if result := models.DB.Create(instance); result.Error != nil {
+		return result.Error
+	}
 
-	w.Header().Set("Content-Type", "application/json")
-
-	json.NewEncoder(w).Encode(instance)
-
+	return nil
 }
 
 type UpdateInstanceModel struct {
@@ -156,7 +151,16 @@ func GetInstancesByServerID(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(instances)
 }
 
+var urlServer = "http://evolution.shub.tech"
+var serverIdGlobal = 1
+
 func CreateInstanceEvolution(w http.ResponseWriter, r *http.Request) {
+	// err := verifyServerAvailabity()
+	// if err != nil {
+	// 	http.Error(w, "Erro ao verificar a disponibilidade do servidor: "+err.Error(), http.StatusInternalServerError)
+	// 	return
+	// }
+
 	// Verifique se o método da solicitação é POST
 	if r.Method != http.MethodPost {
 		http.Error(w, "Método não permitido", http.StatusMethodNotAllowed)
@@ -170,7 +174,7 @@ func CreateInstanceEvolution(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	url := "http://evolution.shub.tech/instance/create"
+	url := urlServer + "/instance/create"
 
 	payloadBytes, err := json.Marshal(payload)
 	if err != nil {
@@ -205,8 +209,176 @@ func CreateInstanceEvolution(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	newInstance := models.Instance{
+		Name:     payload.InstanceName,
+		Status:   "connecting",
+		ServerID: serverIdGlobal,
+		Apikey:   payload.Token,
+	}
+
+	err = CreateInstance(newInstance)
+	if err != nil {
+		http.Error(w, "Erro ao criar a instância: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
 	// Escreve a resposta no corpo da resposta HTTP
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(resp.StatusCode)
 	w.Write(body)
 }
+
+func ConnectInstanceEvolution(w http.ResponseWriter, r *http.Request) {
+	// Verifique se o método da solicitação é GET
+	if r.Method != http.MethodGet {
+		http.Error(w, "Método não permitido", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Obtenha o nome da instância do path da solicitação
+	instanceName := mux.Vars(r)["instanceName"]
+
+	// Verifique se o nome da instância não está vazio
+	if instanceName == "" {
+		http.Error(w, "Nome da instância não fornecido", http.StatusBadRequest)
+		return
+	}
+
+	url := urlServer + "/instance/connect/" + instanceName
+
+	// Cria a solicitação HTTP GET
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		http.Error(w, "Erro ao criar a solicitação HTTP: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Define o cabeçalho da chave de API
+	req.Header.Set("apikey", "e1998e715164141382c8d44434629632")
+
+	// Faz a solicitação HTTP
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		http.Error(w, "Erro ao enviar a solicitação HTTP: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer resp.Body.Close()
+
+	// Lê o corpo da resposta
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		http.Error(w, "Erro ao ler a resposta da solicitação HTTP: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	UpdateStatusInstance(instanceName, "open")
+
+	// Define o cabeçalho Content-Type na resposta
+	w.Header().Set("Content-Type", "application/json")
+
+	// Define o código de status da resposta HTTP com base no status da resposta recebida
+	w.WriteHeader(resp.StatusCode)
+
+	// Escreve o corpo da resposta no corpo da resposta HTTP
+	w.Write(body)
+}
+
+func FetchInstances() ([]models.ServerInstance, error) {
+	// Crie um cliente HTTP personalizado
+	client := &http.Client{}
+
+	// Crie uma solicitação HTTP GET
+	req, err := http.NewRequest("GET", urlServer+"/instance/fetchInstances", nil)
+	if err != nil {
+		return nil, err
+	}
+
+	// Adicione o cabeçalho "apikey" à solicitação
+	req.Header.Set("apikey", "e1998e715164141382c8d44434629632")
+
+	// Faça a solicitação HTTP
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	// Decodifique os dados JSON da resposta
+	var instances []models.ServerInstance
+	if err := json.NewDecoder(resp.Body).Decode(&instances); err != nil {
+		return nil, err
+	}
+
+	// Atualize o status das instâncias
+	for _, instance := range instances {
+		UpdateStatusInstance(instance.APIKey, instance.Status)
+	}
+
+	return instances, nil
+}
+
+func UpdateStatusInstance(field string, status string) error {
+	var instance models.Instance
+	result := models.DB.First(&instance, field)
+	if result.Error != nil {
+		return result.Error
+	}
+
+	instance.Status = status
+
+	if err := models.DB.Save(&instance).Error; err != nil {
+		return err
+	}
+
+	return nil
+}
+
+type Result struct {
+	URL        string
+	CountClose int
+}
+
+func verifyServerAvailabity() string {
+	var servers []Result
+
+	// Realiza a consulta utilizando o GORM
+	err := models.DB.Table("servers s").
+		Select("s.url, COUNT(i.id) AS count_close").
+		Joins("LEFT JOIN instances i ON s.id = i.server_id").
+		Where("i.status = ?", "close").
+		Group("s.url").
+		Scan(&servers).Error
+
+	if err != nil {
+		// Lidar com o erro
+		fmt.Println("Erro ao executar a consulta:", err)
+	}
+
+	for _, server := range servers {
+
+		if server.CountClose <= 20 {
+			return server.URL
+		}
+	}
+
+	// cria o servidor e com os valores retornados eu preencho e insiro no banco
+	newServer := models.Server{
+		Name:             "primeiro servidor",
+		IP:               "http://5.161.71.166/",
+		Port:             8080,
+		Active:           true,
+		CreatedAt:        time.Now(),
+		URL:              "http://evolution.shub.tech",
+		InstanceQuantity: 0,
+	}
+
+	models.DB.Create(&newServer)
+	serverIdGlobal = newServer.ID
+	return newServer.Name
+}
+
+// proximos passos criar um metodo q consome a api do guilherme
+// integrar com o metodo acima
+// utilizar o veridy em todos os metodos que utilizam a url do servidor do evolution
+// utilizar o iota para nomer os servidores
+// testar toda a api

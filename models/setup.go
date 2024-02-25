@@ -3,6 +3,7 @@ package models
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -28,6 +29,19 @@ func ConnectDatabase() error {
 	err = database.AutoMigrate(&Server{}, &Instance{})
 	if err != nil {
 		return fmt.Errorf("failed to auto migrate tables: %w", err)
+	}
+
+	newServer := Server{
+		Name:             "primeiro servidor",
+		IP:               "http://5.161.71.166/",
+		Port:             8080,
+		Active:           true,
+		CreatedAt:        time.Now(),
+		URL:              "http://evolution.shub.tech",
+		InstanceQuantity: 0,
+	}
+	if err := database.Create(&newServer).Error; err != nil {
+		return fmt.Errorf("failed to create new server: %w", err)
 	}
 
 	DB = database
