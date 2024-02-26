@@ -1,0 +1,80 @@
+version: "3.8"
+
+services:
+  evolution_api:
+    image: davidsongomes/evolution-api:latest
+    command: ["node", "./dist/src/main.js"]
+    networks:
+      - evolution_network
+    volumes:
+      - evolution_instances:/evolution/instances
+      - evolution_store:/evolution/store
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mongo
+    environment:
+      # SERVER_URL: https://${}.shub.tech
+      CONFIG_SESSION_PHONE_CLIENT: clouddatasphere
+      CONFIG_SESSION_PHONE_NAME: Chrome
+      AUTHENTICATION_TYPE: apikey
+      AUTHENTICATION_API_KEY: e1998e715164141382c8d44434629632
+      STORE_MESSAGES: "true"
+      STORE_MESSAGE_UP: "true"
+      STORE_CONTACTS: "true"
+      # Permanent data storage MongoDB
+      DATABASE_ENABLED: "true"
+      DATABASE_CONNECTION_URI: mongodb://mongo:27017/?tls=false
+      DATABASE_CONNECTION_DB_PREFIX_NAME: evdocker
+      # Choose the data you want to save in the application's database or store
+      DATABASE_SAVE_DATA_INSTANCE: "true"
+      DATABASE_SAVE_DATA_NEW_MESSAGE: "true"
+      DATABASE_SAVE_MESSAGE_UPDATE: "true"
+      DATABASE_SAVE_DATA_CONTACTS: "true"
+      DATABASE_SAVE_DATA_CHATS: "true"
+      #logs definição
+      LOG_LEVEL: ERROR,WARN,DEBUG,INFO,LOG,VERBOSE,DARK,WEBHOOKS
+      # config adicional
+      DEL_INSTANCE: "false"
+      AUTHENTICATION_EXPOSE_IN_FETCH_INSTANCES: "true"
+    deploy:
+      mode: replicated
+      replicas: 1
+      resources:
+        limits:
+          cpus: "4"
+          memory: 8000M
+      placement:
+        constraints:
+          - node.role == manager
+
+  mongo:
+    image: mongo:7.0.5
+    volumes:
+      - mongo_db:/data/db
+      - mongo_config:/data/configdb
+    networks:
+      - evolution_network
+    environment:
+      MONGO_INITDB_DATABASE: evdocker-whatsapp-api
+    deploy:
+      replicas: 1
+      placement:
+        constraints: [ node.role == manager ]
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+
+volumes:
+  evolution_instances:
+  evolution_store:
+  mongo_db:
+  mongo_config:
+
+networks:
+  evolution_network:
+    external: true

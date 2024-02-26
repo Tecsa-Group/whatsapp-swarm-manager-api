@@ -30,6 +30,6 @@ type ServerInstance struct {
 }
 
 type Result struct {
-	URL        string
-	CountClose int
+	URL       string
+	CountOpen int
 }

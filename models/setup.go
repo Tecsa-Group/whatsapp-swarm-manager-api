@@ -30,18 +30,23 @@ func ConnectDatabase() error {
 	if err != nil {
 		return fmt.Errorf("failed to auto migrate tables: %w", err)
 	}
-
-	newServer := Server{
-		Name:             "primeiro servidor",
-		IP:               "http://5.161.71.166/",
-		Port:             8080,
-		Active:           true,
-		CreatedAt:        time.Now(),
-		URL:              "http://evolution.shub.tech",
-		InstanceQuantity: 0,
+	var hasServer = true
+	var servers Server
+	if err := database.First(&servers).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			hasServer = false
+		}
 	}
-	if err := database.Create(&newServer).Error; err != nil {
-		return fmt.Errorf("failed to create new server: %w", err)
+	if !hasServer {
+		newServer := Server{
+			Name:      "primeiro servidor",
+			IP:        "http://5.161.71.166/",
+			CreatedAt: time.Now(),
+			URL:       "http://evolution.shub.tech",
+		}
+		if err := database.Create(&newServer).Error; err != nil {
+			return fmt.Errorf("failed to create new server: %w", err)
+		}
 	}
 
 	DB = database

@@ -152,7 +152,7 @@ func GetInstancesByServerID(w http.ResponseWriter, r *http.Request) {
 }
 
 var urlServer = "http://evolution.shub.tech"
-var serverIdGlobal = 1
+var serverIdGlobal = make(chan int, 1)
 
 func CreateInstanceEvolution(w http.ResponseWriter, r *http.Request) {
 	// err := verifyServerAvailabity()
@@ -174,7 +174,7 @@ func CreateInstanceEvolution(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	url := urlServer + "/instance/create"
+	url := verifyServerAvailabity() + "/instance/create"
 
 	payloadBytes, err := json.Marshal(payload)
 	if err != nil {
@@ -209,10 +209,12 @@ func CreateInstanceEvolution(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var serverId int = <-serverIdGlobal
+
 	newInstance := models.Instance{
 		Name:     payload.InstanceName,
 		Status:   "connecting",
-		ServerID: serverIdGlobal,
+		ServerID: serverId,
 		Apikey:   payload.Token,
 	}
 
@@ -243,7 +245,7 @@ func ConnectInstanceEvolution(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	url := urlServer + "/instance/connect/" + instanceName
+	url := verifyServerAvailabity() + "/instance/connect/" + instanceName
 
 	// Cria a solicitação HTTP GET
 	req, err := http.NewRequest("GET", url, nil)
@@ -284,14 +286,11 @@ func ConnectInstanceEvolution(w http.ResponseWriter, r *http.Request) {
 }
 
 func FetchInstances() ([]models.ServerInstance, error) {
-	var servers []models.Result
+	var servers []models.Server
 
 	err := models.DB.Table("servers s").
-		Select("s.url").
-		Joins("LEFT JOIN instances i ON s.id = i.server_id").
-		Where("i.status = ?", "close").
-		Group("s.url").
-		Scan(&servers).Error
+		Distinct("s.url").
+		Find(&servers).Error
 
 	if err != nil {
 		// Lidar com o erro
@@ -300,6 +299,7 @@ func FetchInstances() ([]models.ServerInstance, error) {
 	}
 
 	var allInstances []models.ServerInstance
+	fmt.Print("servers", servers)
 
 	for _, server := range servers {
 		client := &http.Client{}
@@ -328,6 +328,7 @@ func FetchInstances() ([]models.ServerInstance, error) {
 
 		// Atualize o status das instâncias
 		for _, instance := range instances {
+			fmt.Print("instance", instance)
 			err := UpdateStatusInstance(instance.APIKey, instance.Status)
 			if err != nil {
 				// Lidar com o erro, se necessário
@@ -363,9 +364,9 @@ func verifyServerAvailabity() string {
 
 	// Realiza a consulta utilizando o GORM
 	err := models.DB.Table("servers s").
-		Select("s.url, COUNT(i.id) AS count_close").
+		Select("s.url, COUNT(i.id) AS count_open").
 		Joins("LEFT JOIN instances i ON s.id = i.server_id").
-		Where("i.status = ?", "close").
+		Where("i.status = ?", "open").
 		Group("s.url").
 		Scan(&servers).Error
 
@@ -373,28 +374,17 @@ func verifyServerAvailabity() string {
 		// Lidar com o erro
 		fmt.Println("Erro ao executar a consulta:", err)
 	}
-
+	// if len(servers) <= 0 {
+	// 	return urlServer
+	// }
 	for _, server := range servers {
-
-		if server.CountClose <= 20 {
+		if server.CountOpen <= 20 {
 			return server.URL
 		}
 	}
+	go CreateServerHetzner()
 
-	// cria o servidor e com os valores retornados eu preencho e insiro no banco
-	newServer := models.Server{
-		Name:             "primeiro servidor",
-		IP:               "http://5.161.71.166/",
-		Port:             8080,
-		Active:           true,
-		CreatedAt:        time.Now(),
-		URL:              "http://evolution.shub.tech",
-		InstanceQuantity: 0,
-	}
-
-	models.DB.Create(&newServer)
-	serverIdGlobal = newServer.ID
-	return newServer.Name
+	return urlServer
 }
 
 // proximos passos criar um metodo q consome a api do guilherme
@@ -402,3 +392,11 @@ func verifyServerAvailabity() string {
 // utilizar o veridy em todos os metodos que utilizam a url do servidor do evolution
 // utilizar o iota para nomer os servidores
 // testar toda a api
+
+// responseCreateServer, err := CreateServerHetzner()
+// if err != nil {
+// 	return "error at CreateServerHetzner: " + err.Error()
+// }
+// // cria o servidor e com os valores retornados eu preencho e insiro no banco
+// serverIdGlobal = responseCreateServer.ID
+// return responseCreateServer.URL

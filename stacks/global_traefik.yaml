@@ -1,0 +1,66 @@
+version: '3.8'
+
+services:
+  traefik:
+    image: traefik:latest
+    command:
+      - --providers.docker=true
+      - --entrypoints.web.address=:80
+      - --entrypoints.websecure.address=:443
+      - --providers.docker.exposedbydefault=false
+      - --providers.docker.swarmMode=true
+      - --providers.docker.network=evolution_network
+      - --providers.docker.endpoint=unix:///var/run/docker.sock
+      - --certificatesresolvers.le.acme.httpchallenge.entrypoint=web
+      - --certificatesresolvers.le.acme.email=contato@clouddatasphere.com
+      - --certificatesresolvers.le.acme.storage=/letsencrypt/acme.json
+      - --certificatesresolvers.le.acme.tlschallenge=true
+      - --entrypoints.web.http.redirections.entryPoint.to=websecure
+      - --entrypoints.web.http.redirections.entryPoint.scheme=https
+      - --api.dashboard=true
+      - --api.insecure=true
+      - --log.level=INFO
+      - --metrics.prometheus=true
+      - --metrics.prometheus.addEntryPointsLabels=true
+      - --metrics.prometheus.addRoutersLabels=true
+      - --metrics.prometheus.addServicesLabels=true
+      - --entryPoints.metrics.address=:8082
+      - --metrics.prometheus.entryPoint=metrics
+      - --metrics.prometheus.buckets=0.1,0.3,1.2,5.0
+      - --providers.docker.watch
+      - --accesslog=true  # Adicionado para ativar o Access Log
+      - --accesslog.format=json    # Opcional: Especificar formato do log
+
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8082:8082"
+    volumes:
+      - traefik_certificates:/letsencrypt
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    deploy:
+      labels:
+        - traefik.enable=true
+        - "prometheus.io/scrape=true"
+        - "prometheus.io/port=8082"
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+    networks:
+      - evolution_network
+    restart: unless-stopped
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  traefik_certificates:
+    external: true
+    name: certificados
+
+networks:
+  evolution_network:
+    external: true

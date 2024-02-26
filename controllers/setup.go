@@ -21,7 +21,6 @@ func New() http.Handler {
 
 	router.HandleFunc("/servers", handlers.GetAllservers).Methods("GET")
 	router.HandleFunc("/servers/{id}", handlers.GetServer).Methods("GET")
-	router.HandleFunc("/servers", handlers.CreateServer).Methods("POST")
 	router.HandleFunc("/servers/{id}", handlers.UpdateServer).Methods("PUT")
 	router.HandleFunc("/servers/{id}", handlers.DeleteServer).Methods("DELETE")
 
