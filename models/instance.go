@@ -28,3 +28,8 @@ type ServerInstance struct {
 	ServerURL         string `json:"serverUrl"`
 	APIKey            string `json:"apikey"`
 }
+
+type Result struct {
+	URL        string
+	CountClose int
+}

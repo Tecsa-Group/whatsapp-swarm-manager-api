@@ -284,37 +284,62 @@ func ConnectInstanceEvolution(w http.ResponseWriter, r *http.Request) {
 }
 
 func FetchInstances() ([]models.ServerInstance, error) {
-	// Crie um cliente HTTP personalizado
-	client := &http.Client{}
+	var servers []models.Result
 
-	// Crie uma solicitação HTTP GET
-	req, err := http.NewRequest("GET", urlServer+"/instance/fetchInstances", nil)
+	err := models.DB.Table("servers s").
+		Select("s.url").
+		Joins("LEFT JOIN instances i ON s.id = i.server_id").
+		Where("i.status = ?", "close").
+		Group("s.url").
+		Scan(&servers).Error
+
 	if err != nil {
+		// Lidar com o erro
+		fmt.Println("Erro ao executar a consulta:", err)
 		return nil, err
 	}
 
-	// Adicione o cabeçalho "apikey" à solicitação
-	req.Header.Set("apikey", "e1998e715164141382c8d44434629632")
+	var allInstances []models.ServerInstance
 
-	// Faça a solicitação HTTP
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, err
+	for _, server := range servers {
+		client := &http.Client{}
+
+		// Crie uma solicitação HTTP GET
+		req, err := http.NewRequest("GET", server.URL+"/instance/fetchInstances", nil)
+		if err != nil {
+			return nil, err
+		}
+
+		// Adicione o cabeçalho "apikey" à solicitação
+		req.Header.Set("apikey", "e1998e715164141382c8d44434629632")
+
+		// Faça a solicitação HTTP
+		resp, err := client.Do(req)
+		if err != nil {
+			return nil, err
+		}
+		defer resp.Body.Close()
+
+		// Decodifique os dados JSON da resposta
+		var instances []models.ServerInstance
+		if err := json.NewDecoder(resp.Body).Decode(&instances); err != nil {
+			return nil, err
+		}
+
+		// Atualize o status das instâncias
+		for _, instance := range instances {
+			err := UpdateStatusInstance(instance.APIKey, instance.Status)
+			if err != nil {
+				// Lidar com o erro, se necessário
+				fmt.Println("Erro ao atualizar status da instância:", err)
+			}
+		}
+
+		// Adicione as instâncias obtidas ao slice allInstances
+		allInstances = append(allInstances, instances...)
 	}
-	defer resp.Body.Close()
 
-	// Decodifique os dados JSON da resposta
-	var instances []models.ServerInstance
-	if err := json.NewDecoder(resp.Body).Decode(&instances); err != nil {
-		return nil, err
-	}
-
-	// Atualize o status das instâncias
-	for _, instance := range instances {
-		UpdateStatusInstance(instance.APIKey, instance.Status)
-	}
-
-	return instances, nil
+	return allInstances, nil
 }
 
 func UpdateStatusInstance(field string, status string) error {
@@ -333,13 +358,8 @@ func UpdateStatusInstance(field string, status string) error {
 	return nil
 }
 
-type Result struct {
-	URL        string
-	CountClose int
-}
-
 func verifyServerAvailabity() string {
-	var servers []Result
+	var servers []models.Result
 
 	// Realiza a consulta utilizando o GORM
 	err := models.DB.Table("servers s").
