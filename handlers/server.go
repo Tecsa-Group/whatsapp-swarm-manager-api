@@ -220,7 +220,7 @@ func CreateServerHetzner() (models.Server, error) {
 	time.Sleep(await)
 
 	scriptPath := "./stacks/deploy_stack.sh"
-
+	fmt.Println("ip", responseBody.Server.PublicNet.IPv4.IP)
 	cmd := exec.Command("/bin/sh", scriptPath, responseBody.Server.PublicNet.IPv4.IP, nameServer)
 	stdout, err := cmd.Output()
 	if err != nil {

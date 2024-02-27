@@ -20,7 +20,7 @@ echo "entrou porra3"
 
 
 # ssh-keygen -R "$SERVER_IP"
-echo "servername: "$SERVER_IP
+echo "serverIp: "$SERVER_IP
 echo "domainName" $DOMAIN_NAME
 echo "Preparando diretório no servidor..."
 # ssh -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_IP
