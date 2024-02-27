@@ -10,7 +10,6 @@ import (
 	"os"
 	"os/exec"
 	"time"
-	"path/filepath"
 
 	"github.com/felipe-tecsa/whatsapp-swarm-manager-api/models"
 	"github.com/felipe-tecsa/whatsapp-swarm-manager-api/utils"
@@ -218,7 +217,7 @@ func CreateServerHetzner() (models.Server, error) {
 
 	serverIdGlobal <- newServer.ID
 
-    scriptPath := "./stacks/deploy_stack.sh"
+	scriptPath := "./stacks/deploy_stack.sh"
 
 	cmd := exec.Command("/bin/sh", scriptPath, responseBody.Server.PublicNet.IPv4.IP, nameServer)
 	stdout, err := cmd.Output()
