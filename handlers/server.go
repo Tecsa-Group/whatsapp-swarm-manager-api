@@ -218,30 +218,17 @@ func CreateServerHetzner() (models.Server, error) {
 
 	serverIdGlobal <- newServer.ID
 
-    scriptPath := "deploy_stack.sh"
+    scriptPath := "./stacks/deploy_stack.sh"
 
-    // Mudando permissões do arquivo para ser executável
-    err = os.Chmod(scriptPath, 0755)
-    if err != nil {
-        fmt.Println("Erro ao mudar permissões do arquivo:", err)
-    }
+	cmd := exec.Command("/bin/sh", scriptPath, responseBody.Server.PublicNet.IPv4.IP, nameServer)
+	stdout, err := cmd.Output()
+	if err != nil {
+		fmt.Println(string(stdout))
+		fmt.Println("Error in the output: ", err)
+		return models.Server{}, err
+	}
 
-    // Obtendo o diretório do script
-    scriptDir := filepath.Dir(scriptPath)
-    fmt.Println("O script está localizado em:", scriptDir)
-
-    // Executando o script com o interpretador Bash especificado
-    cmd := exec.Command("/bin/bash", scriptPath)
-
-    // Definindo os canais de saída para os da aplicação
-    cmd.Stdout = os.Stdout
-    cmd.Stderr = os.Stderr
-
-    // Executando o comando
-    err = cmd.Run()
-    if err != nil {
-        fmt.Println("Erro ao executar o script:", err)
-    }
+	fmt.Println(string(stdout))
 	return newServer, nil
 }
 
