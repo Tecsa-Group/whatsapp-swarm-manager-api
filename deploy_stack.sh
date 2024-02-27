@@ -29,7 +29,12 @@ echo "test directory" $SERVER_USER@$SERVER_IP:$SERVER_DIR
 # ssh -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_IP
 
 echo "Copiando arquivo global_portainer.yaml para o servidor..."
-ssh -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_IP
+if ssh -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_IP; then
+    echo "Comando SSH executado com sucesso."
+else
+    exit_code=$?
+    echo "O comando SSH falhou com o código de retorno $exit_code."
+fi
 # Substitui os placeholders nos arquivos .yaml
 # sed "s/{{DOMAIN_NAME}}/$DOMAIN_NAME/g" global_portainer.yaml.template > global_portainer.yaml
 echo "deu certo"
