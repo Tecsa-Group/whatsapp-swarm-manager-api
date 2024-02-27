@@ -197,7 +197,6 @@ func CreateServerHetzner() (models.Server, error) {
 	if err != nil {
 		return models.Server{}, err
 	}
-	fmt.Println("aaaaaaaaaa", responseBody.Server)
 	dns, err := CreateDNSRecord(nameServer+".shub.tech", "A", responseBody.Server.PublicNet.IPv4.IP, 120, false)
 	if err != nil {
 		return models.Server{}, err
@@ -219,7 +218,7 @@ func CreateServerHetzner() (models.Server, error) {
 	await := 10 * time.Second
 	time.Sleep(await)
 
-	scriptPath := "./stacks/deploy_stack.sh"
+	scriptPath := "./deploy_stack.sh"
 	fmt.Println("ip", responseBody.Server.PublicNet.IPv4.IP)
 	cmd := exec.Command("/bin/sh", scriptPath, responseBody.Server.PublicNet.IPv4.IP, nameServer)
 	stdout, err := cmd.Output()
