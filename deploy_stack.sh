@@ -29,23 +29,23 @@ echo "test directory" $SERVER_USER@$SERVER_IP:$SERVER_DIR
 # ssh -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_IP
 
 echo "Copiando arquivo global_portainer.yaml para o servidor..."
-ssh $SERVER_USER@$SERVER_IP
+ssh -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_IP
 # Substitui os placeholders nos arquivos .yaml
 # sed "s/{{DOMAIN_NAME}}/$DOMAIN_NAME/g" global_portainer.yaml.template > global_portainer.yaml
 echo "deu certo"
-scp global_portainer.yaml $SERVER_USER@$SERVER_IP:$SERVER_DIR
+scp -o StrictHostKeyChecking=no global_portainer.yaml $SERVER_USER@$SERVER_IP:$SERVER_DIR
 
 # echo "Copiando arquivo traefik.yaml para o servidor..."
 # scp global_traefik.yaml $SERVER_USER@$SERVER_IP:$SERVER_DIR
 
 echo "Copiando arquivo rep_mongo.yaml para o servidor..."
-scp rep_mongo.yaml $SERVER_USER@$SERVER_IP:$SERVER_DIR
+scp -o StrictHostKeyChecking=no rep_mongo.yaml $SERVER_USER@$SERVER_IP:$SERVER_DIR
 
 echo "Copiando arquivo rep_evolution_api.yaml para o servidor..."
-scp rep_evolution_api.yaml $SERVER_USER@$SERVER_IP:$SERVER_DIR
+scp -o StrictHostKeyChecking=no rep_evolution_api.yaml $SERVER_USER@$SERVER_IP:$SERVER_DIR
 
 echo "Processando no servidor..."
-ssh $SERVER_USER@$SERVER_IP <<EOF
+ssh -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_IP <<EOF
     # Atualiza os pacotes
     echo "Atualizando pacotes do sistema..."
     sudo apt-get update -y
