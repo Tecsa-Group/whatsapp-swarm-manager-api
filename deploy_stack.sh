@@ -24,7 +24,8 @@ echo "serverIp: "$SERVER_IP
 echo "domainName" $DOMAIN_NAME
 echo "dirName" $SERVER_DIR
 echo "Preparando diretório no servidor..."
-echo $SERVER_USER@$SERVER_IP
+echo "connection"$SERVER_USER@$SERVER_IP
+echo "test directory" $SERVER_USER@$SERVER_IP:$SERVER_DIR
 # ssh -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_IP
 
 echo "Copiando arquivo global_portainer.yaml para o servidor..."
