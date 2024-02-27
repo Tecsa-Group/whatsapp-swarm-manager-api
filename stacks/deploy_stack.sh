@@ -18,8 +18,7 @@ LOCAL_DIR="."  # Diretório do projeto
 ssh-keygen -R "$SERVER_IP"
 
 echo "Preparando diretório no servidor..."
-yes yes | ssh -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_IP
-# "rm -rf $SERVER_DIR && mkdir -p $SERVER_DIR"
+yes yes | ssh -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_IP "rm -rf $SERVER_DIR && mkdir -p $SERVER_DIR"
 
 echo "Copiando arquivo global_portainer.yaml para o servidor..."
 # Substitui os placeholders nos arquivos .yaml

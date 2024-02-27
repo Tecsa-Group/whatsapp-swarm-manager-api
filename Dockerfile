@@ -3,6 +3,7 @@ FROM golang:1.22.0-alpine AS builder
 
 RUN apk update && apk upgrade && \
     apk add --no-cache bash git openssh
+
 # Define o diretório de trabalho dentro do contêiner
 WORKDIR /app
 
@@ -14,6 +15,9 @@ RUN go mod download
 
 # Copie o restante do código-fonte da aplicação
 COPY . .
+
+# Copie suas chaves SSH para dentro do contêiner (não recomendado)
+COPY ssh-keys /root/.ssh/
 
 # Compile o binário da aplicação
 RUN go build -o main .
