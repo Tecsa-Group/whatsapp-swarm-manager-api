@@ -305,7 +305,7 @@ func FetchInstances() ([]models.ServerInstance, error) {
 		client := &http.Client{}
 
 		// Crie uma solicitação HTTP GET
-		req, err := http.NewRequest("GET", server.URL+"/instance/fetchInstances", nil)
+		req, err := http.NewRequest("GET", server.URL+":8080/instance/fetchInstances", nil)
 		if err != nil {
 			return nil, err
 		}

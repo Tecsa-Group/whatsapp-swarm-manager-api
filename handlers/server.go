@@ -192,7 +192,6 @@ func CreateServerHetzner() (models.Server, error) {
 	}
 	var responseBody models.ResponseServerHetzner
 	err = json.Unmarshal(body, &responseBody)
-	fmt.Print("body", responseBody)
 
 	if err != nil {
 		return models.Server{}, err
@@ -225,7 +224,7 @@ func CreateServerHetzner() (models.Server, error) {
 	cmd := exec.Command("/bin/sh", scriptPath, responseBody.Server.PublicNet.IPv4.IP, nameServer)
 	stdout, err := cmd.Output()
 	if err != nil {
-		fmt.Println(string(stdout))
+		fmt.Println("real error", string(stdout))
 		fmt.Println("Error in the output: ", err)
 		return models.Server{}, err
 	}
