@@ -217,6 +217,9 @@ func CreateServerHetzner() (models.Server, error) {
 
 	serverIdGlobal <- newServer.ID
 
+	await := 10 * time.Second
+	time.Sleep(await)
+
 	scriptPath := "./stacks/deploy_stack.sh"
 
 	cmd := exec.Command("/bin/sh", scriptPath, responseBody.Server.PublicNet.IPv4.IP, nameServer)
