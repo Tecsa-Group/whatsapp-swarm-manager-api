@@ -16,7 +16,8 @@ SERVER_DIR="/opt/portainer"
 LOCAL_DIR="."  # Diretório do projeto
 
 ssh-keygen -R "$SERVER_IP"
-
+echo $SERVER_IP
+echo $DOMAIN_NAME
 echo "Preparando diretório no servidor..."
 yes yes | ssh -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_IP "rm -rf $SERVER_DIR && mkdir -p $SERVER_DIR"
 
