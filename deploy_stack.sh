@@ -23,12 +23,14 @@ echo "entrou porra3"
 echo "serverIp: "$SERVER_IP
 echo "domainName" $DOMAIN_NAME
 echo "Preparando diretório no servidor..."
+echo $SERVER_USER@$SERVER_IP
 # ssh -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_IP
 
 echo "Copiando arquivo global_portainer.yaml para o servidor..."
+ssh $SERVER_USER@$SERVER_IP
 # Substitui os placeholders nos arquivos .yaml
 # sed "s/{{DOMAIN_NAME}}/$DOMAIN_NAME/g" global_portainer.yaml.template > global_portainer.yaml
-
+echo "deu certo"
 scp global_portainer.yaml $SERVER_USER@$SERVER_IP:$SERVER_DIR
 
 # echo "Copiando arquivo traefik.yaml para o servidor..."
