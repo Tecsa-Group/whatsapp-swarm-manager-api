@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"time"
+	"path/filepath"
 
 	"github.com/felipe-tecsa/whatsapp-swarm-manager-api/models"
 	"github.com/felipe-tecsa/whatsapp-swarm-manager-api/utils"
@@ -216,12 +217,31 @@ func CreateServerHetzner() (models.Server, error) {
 	}
 
 	serverIdGlobal <- newServer.ID
-	cmd := exec.Command("sh", "../stacks/deploy_stack.sh", responseBody.Server.PublicNet.IPv4.IP, nameServer)
 
-	error := cmd.Run()
-	if error != nil {
-		fmt.Print("Erro no script sh", error)
-	}
+    scriptPath := "deploy_stack.sh"
+
+    // Mudando permissões do arquivo para ser executável
+    err = os.Chmod(scriptPath, 0755)
+    if err != nil {
+        fmt.Println("Erro ao mudar permissões do arquivo:", err)
+    }
+
+    // Obtendo o diretório do script
+    scriptDir := filepath.Dir(scriptPath)
+    fmt.Println("O script está localizado em:", scriptDir)
+
+    // Executando o script com o interpretador Bash especificado
+    cmd := exec.Command("/bin/bash", scriptPath)
+
+    // Definindo os canais de saída para os da aplicação
+    cmd.Stdout = os.Stdout
+    cmd.Stderr = os.Stderr
+
+    // Executando o comando
+    err = cmd.Run()
+    if err != nil {
+        fmt.Println("Erro ao executar o script:", err)
+    }
 	return newServer, nil
 }
 
