@@ -379,9 +379,9 @@ func verifyServerAvailabity() string {
 		fmt.Println("Erro ao executar a consulta:", err)
 	}
 
-	if len(servers) <= 0 {
-		return urlServer
-	}
+	// if len(servers) <= 0 {
+	// 	return urlServer
+	// }
 	for _, server := range servers {
 		if server.CountOpen <= 20 {
 			return server.URL
