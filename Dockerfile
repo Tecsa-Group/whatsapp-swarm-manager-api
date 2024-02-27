@@ -17,8 +17,6 @@ RUN go mod download
 COPY . .
 
 # Copie suas chaves SSH para dentro do contêiner (não recomendado)
-COPY ssh-keys /root/.ssh/
-
 # Compile o binário da aplicação
 RUN go build -o main .
 

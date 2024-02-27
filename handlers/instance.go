@@ -4,8 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
+	"os"
+	"strconv"
 	"time"
 
 	"github.com/felipe-tecsa/whatsapp-swarm-manager-api/models"
@@ -152,7 +155,6 @@ func GetInstancesByServerID(w http.ResponseWriter, r *http.Request) {
 }
 
 var urlServer = "http://evolution.shub.tech"
-var serverIdGlobal = make(chan int, 1)
 
 func CreateInstanceEvolution(w http.ResponseWriter, r *http.Request) {
 	// err := verifyServerAvailabity()
@@ -174,8 +176,7 @@ func CreateInstanceEvolution(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	url := verifyServerAvailabity() + ":8080/instance/create"
-
+	url := verifyServerAvailabity() + "/instance/create"
 	payloadBytes, err := json.Marshal(payload)
 	if err != nil {
 		http.Error(w, "Erro ao codificar o payload:"+err.Error(), http.StatusInternalServerError)
@@ -203,18 +204,21 @@ func CreateInstanceEvolution(w http.ResponseWriter, r *http.Request) {
 	defer resp.Body.Close()
 
 	// Lê a resposta da solicitação
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		http.Error(w, "Erro ao ler a resposta da solicitação HTTP:"+err.Error(), http.StatusInternalServerError)
 		return
 	}
-
-	var serverId int = <-serverIdGlobal
+	envValueStr := os.Getenv("ID_SERVER")
+	envValueInt, err := strconv.Atoi(envValueStr)
+	if err != nil {
+		fmt.Println("Erro ao converter variável de ambiente para inteiro:", err)
+	}
 
 	newInstance := models.Instance{
 		Name:     payload.InstanceName,
 		Status:   "connecting",
-		ServerID: serverId,
+		ServerID: envValueInt,
 		Apikey:   payload.Token,
 	}
 
@@ -305,7 +309,7 @@ func FetchInstances() ([]models.ServerInstance, error) {
 		client := &http.Client{}
 
 		// Crie uma solicitação HTTP GET
-		req, err := http.NewRequest("GET", server.URL+":8080/instance/fetchInstances", nil)
+		req, err := http.NewRequest("GET", server.URL+"/instance/fetchInstances", nil)
 		if err != nil {
 			return nil, err
 		}
@@ -374,9 +378,10 @@ func verifyServerAvailabity() string {
 		// Lidar com o erro
 		fmt.Println("Erro ao executar a consulta:", err)
 	}
-	// if len(servers) <= 0 {
-	// 	return urlServer
-	// }
+
+	if len(servers) <= 0 {
+		return urlServer
+	}
 	for _, server := range servers {
 		if server.CountOpen <= 20 {
 			return server.URL

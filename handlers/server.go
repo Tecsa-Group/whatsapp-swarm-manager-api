@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"strconv"
 	"time"
 
 	"github.com/felipe-tecsa/whatsapp-swarm-manager-api/models"
@@ -207,14 +208,13 @@ func CreateServerHetzner() (models.Server, error) {
 		Name:      responseBody.Server.Name,
 		IP:        responseBody.Server.PublicNet.IPv4.IP,
 		CreatedAt: time.Now(),
-		URL:       "http://" + nameServer + ".shub.tech",
+		URL:       "https://" + nameServer + ".shub.tech",
 	}
 
 	if err := models.DB.Create(&newServer).Error; err != nil {
 		return models.Server{}, err
 	}
-
-	serverIdGlobal <- newServer.ID
+	os.Setenv("ID_SERVER", strconv.Itoa(newServer.ID))
 
 	await := 10 * time.Second
 	time.Sleep(await)
