@@ -19,7 +19,7 @@ ssh-keygen -R "$SERVER_IP"
 echo "servername: "$SERVER_IP
 echo "domainName" $DOMAIN_NAME
 echo "Preparando diretório no servidor..."
-# yes yes | ssh -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_IP
+ssh -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_IP "mkdir -p $SERVER_DIR"
 
 echo "Copiando arquivo global_portainer.yaml para o servidor..."
 # Substitui os placeholders nos arquivos .yaml
