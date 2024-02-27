@@ -174,7 +174,7 @@ func CreateInstanceEvolution(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	url := verifyServerAvailabity() + "/instance/create"
+	url := verifyServerAvailabity() + ":8080/instance/create"
 
 	payloadBytes, err := json.Marshal(payload)
 	if err != nil {
@@ -245,7 +245,7 @@ func ConnectInstanceEvolution(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	url := verifyServerAvailabity() + "/instance/connect/" + instanceName
+	url := verifyServerAvailabity() + ":8080/instance/connect/" + instanceName
 
 	// Cria a solicitação HTTP GET
 	req, err := http.NewRequest("GET", url, nil)

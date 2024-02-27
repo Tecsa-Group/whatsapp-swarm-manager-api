@@ -160,7 +160,7 @@ func CreateServerHetzner() (models.Server, error) {
 		Name:       nameServer,
 		ServerType: "cx11",
 		SSHKeys: []int{
-			19697489, 19698323,
+			19697489, 19698323, 19785586, 19775100,
 		},
 		StartAfterCreate: true,
 	}
@@ -208,7 +208,7 @@ func CreateServerHetzner() (models.Server, error) {
 		Name:      responseBody.Server.Name,
 		IP:        responseBody.Server.PublicNet.IPv4.IP,
 		CreatedAt: time.Now(),
-		URL:       "https://" + nameServer + ".shub.tech",
+		URL:       "http://" + nameServer + ".shub.tech",
 	}
 
 	if err := models.DB.Create(&newServer).Error; err != nil {
