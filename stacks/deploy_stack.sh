@@ -15,7 +15,7 @@ DOMAIN_NAME="$2"
 SERVER_DIR="/opt/portainer"
 LOCAL_DIR="."  # Diretório do projeto
 
-ssh-keygen -R "$SERVER_IP"
+# ssh-keygen -R "$SERVER_IP"
 echo "servername: "$SERVER_IP
 echo "domainName" $DOMAIN_NAME
 echo "Preparando diretório no servidor..."
