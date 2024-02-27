@@ -197,7 +197,7 @@ func CreateServerHetzner() (models.Server, error) {
 	if err != nil {
 		return models.Server{}, err
 	}
-
+	fmt.Println("aaaaaaaaaa", responseBody.Server)
 	dns, err := CreateDNSRecord(nameServer+".shub.tech", "A", responseBody.Server.PublicNet.IPv4.IP, 120, false)
 	if err != nil {
 		return models.Server{}, err
