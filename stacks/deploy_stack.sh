@@ -14,7 +14,7 @@ echo "entrou porra2"
 SERVER_USER="root"
 SERVER_IP="$1"  # Usa o primeiro argumento como o IP do servidor
 DOMAIN_NAME="$2"
-SERVER_DIR="/opt/portainer"
+SERVER_DIR="/root"
 LOCAL_DIR="."  # Diretório do projeto
 echo "entrou porra3"
 
@@ -23,7 +23,7 @@ echo "entrou porra3"
 echo "servername: "$SERVER_IP
 echo "domainName" $DOMAIN_NAME
 echo "Preparando diretório no servidor..."
-ssh -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_IP "mkdir -p $SERVER_DIR"
+# ssh -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_IP
 
 echo "Copiando arquivo global_portainer.yaml para o servidor..."
 # Substitui os placeholders nos arquivos .yaml
