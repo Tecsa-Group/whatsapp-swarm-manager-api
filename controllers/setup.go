@@ -18,6 +18,7 @@ func New() http.Handler {
 
 	router.HandleFunc("/create-instance", handlers.CreateInstanceEvolution).Methods("POST")
 	router.HandleFunc("/connect-instance/{instanceName}", handlers.ConnectInstanceEvolution).Methods("GET")
+	router.HandleFunc("/delete-instance/{instanceName}", handlers.DeleteInstanceEvolution).Methods("DELETE")
 
 	router.HandleFunc("/servers", handlers.GetAllservers).Methods("GET")
 	router.HandleFunc("/servers/{id}", handlers.GetServer).Methods("GET")

@@ -153,8 +153,6 @@ func GetInstancesByServerID(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(instances)
 }
 
-var urlServer = "http://evolution.shub.tech"
-
 func CreateInstanceEvolution(w http.ResponseWriter, r *http.Request) {
 	// err := verifyServerAvailabity()
 	// if err != nil {
@@ -223,6 +221,66 @@ func CreateInstanceEvolution(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// Escreve a resposta no corpo da resposta HTTP
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(resp.StatusCode)
+	w.Write(body)
+}
+
+func DeleteInstanceEvolution(w http.ResponseWriter, r *http.Request) {
+	// Verifique se o método da solicitação é GET
+	if r.Method != http.MethodDelete {
+		http.Error(w, "Método não permitido", http.StatusMethodNotAllowed)
+		return
+	}
+
+	instanceName := mux.Vars(r)["instanceName"]
+
+	// Verifique se o nome da instância não está vazio
+	if instanceName == "" {
+		http.Error(w, "Nome da instância não fornecido", http.StatusBadRequest)
+		return
+	}
+
+	serverUrl := models.UrlServer
+
+	error := models.DB.Table("servers").
+		Select("servers.url").
+		Joins("LEFT JOIN instances on servers.id = instances.server_id").
+		Where("instances.name = ?", instanceName).
+		Group("servers.url").
+		First(&serverUrl).
+		Error
+	if error != nil {
+		// Lidar com o erro
+		http.Error(w, "Servidor não encontrado", http.StatusNotFound)
+		return
+	}
+
+	url := serverUrl.URL + "/instance/delete/" + instanceName
+	req, err := http.NewRequest("DELETE", url, nil)
+	if err != nil {
+		http.Error(w, "Erro ao criar a solicitação HTTP: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	req.Header.Set("apikey", os.Getenv("EVOLUTION_APIKEY"))
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		http.Error(w, "Erro ao enviar a solicitação HTTP: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		http.Error(w, "Erro ao ler a resposta da solicitação HTTP: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	models.DB.Table("instances").Where("instances.name = ?", instanceName).Delete(&models.Instance{})
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(resp.StatusCode)
 	w.Write(body)
