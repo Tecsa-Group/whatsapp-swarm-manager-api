@@ -17,7 +17,8 @@ COPY ssh-keys/id_rsa.pub /root/.ssh/id_rsa.pub
 
 # Defina as permissões apropriadas para os arquivos
 RUN chmod 600 /root/.ssh/id_rsa && \
-    chmod 600 /root/.ssh/id_rsa.pub
+    chmod 600 /root/.ssh/id_rsa.pub \
+    chmod +x deploy_stack.sh
 
 # Copie o arquivo go.mod e go.sum para baixar as dependências
 COPY go.mod go.sum ./
