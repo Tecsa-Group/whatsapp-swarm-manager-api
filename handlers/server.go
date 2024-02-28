@@ -218,7 +218,7 @@ func CreateServerHetzner() (models.Server, error) {
 	await := 10 * time.Second
 	time.Sleep(await)
 
-	cmd := exec.Command("go", "run", "exec_script.go", responseBody.Server.PublicNet.IPv4.IP, nameServer)
+	cmd := exec.Command("go", "run", "./exec_script.go", responseBody.Server.PublicNet.IPv4.IP, nameServer)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
