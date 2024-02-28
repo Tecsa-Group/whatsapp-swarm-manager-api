@@ -28,17 +28,17 @@ echo "connection"$SERVER_USER@$SERVER_IP
 echo "test directory" $SERVER_USER@$SERVER_IP:$SERVER_DIR
 # ssh -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_IP
 
-echo "Copiando arquivo global_portainer.yaml para o servidor..."
-if ssh -i /root/.ssh/id_rsa -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_IP; then
-    echo "Comando SSH executado com sucesso."
-else
-    exit_code=$?
-    echo "O comando SSH falhou com o código de retorno $exit_code."
-fi
+# echo "Copiando arquivo global_portainer.yaml para o servidor..."
+# if ssh -i /root/.ssh/id_rsa -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_IP; then
+#     echo "Comando SSH executado com sucesso."
+# else
+#     exit_code=$?
+#     echo "O comando SSH falhou com o código de retorno $exit_code."
+# fi
 # Substitui os placeholders nos arquivos .yaml
 # sed "s/{{DOMAIN_NAME}}/$DOMAIN_NAME/g" global_portainer.yaml.template > global_portainer.yaml
 echo "deu certo"
-scp -o StrictHostKeyChecking=no global_portainer.yaml $SERVER_USER@$SERVER_IP:$SERVER_DIR
+scp -o StrictHostKeyChecking=no global_portainer.yaml $SERVER_USER@$SERVER_IP:$SERVER_DIR || true
 
 # echo "Copiando arquivo traefik.yaml para o servidor..."
 # scp global_traefik.yaml $SERVER_USER@$SERVER_IP:$SERVER_DIR
