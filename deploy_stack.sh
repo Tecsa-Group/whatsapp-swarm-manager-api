@@ -1,5 +1,4 @@
 #!/bin/bash
-echo "entrou porra"
 set -e
 
 # Verifica se um argumento foi fornecido
@@ -8,7 +7,6 @@ if [ "$#" -ne 2 ]; then
     echo "Uso: $0 <SERVER_IP> <DOMAIN_NAME>"
     exit 1
 fi
-echo "entrou porra2"
 
 # Configurações
 SERVER_USER="root"
@@ -16,7 +14,6 @@ SERVER_IP="$1"  # Usa o primeiro argumento como o IP do servidor
 DOMAIN_NAME="$2"
 SERVER_DIR="/root"
 LOCAL_DIR="."  # Diretório do projeto
-echo "entrou porra3"
 
 
 # ssh-keygen -R "$SERVER_IP"
@@ -28,13 +25,8 @@ echo "connection"$SERVER_USER@$SERVER_IP
 echo "test directory" $SERVER_USER@$SERVER_IP:$SERVER_DIR
 # ssh -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_IP
 
-# echo "Copiando arquivo global_portainer.yaml para o servidor..."
-# if ssh -i /root/.ssh/id_rsa -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_IP; then
-#     echo "Comando SSH executado com sucesso."
-# else
-#     exit_code=$?
-#     echo "O comando SSH falhou com o código de retorno $exit_code."
-# fi
+echo "Copiando arquivo global_portainer.yaml para o servidor..."
+ssh -i /root/.ssh/id_rsa -o StrictHostKeyChecking=no -l $SERVER_USER $SERVER_IP "pwd"
 # Substitui os placeholders nos arquivos .yaml
 # sed "s/{{DOMAIN_NAME}}/$DOMAIN_NAME/g" global_portainer.yaml.template > global_portainer.yaml
 echo "deu certo"
