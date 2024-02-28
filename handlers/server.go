@@ -215,7 +215,7 @@ func CreateServerHetzner() (models.Server, error) {
 	}
 	os.Setenv("ID_SERVER", strconv.Itoa(newServer.ID))
 
-	await := 10 * time.Second
+	await := 50 * time.Second
 	time.Sleep(await)
 	cmd := exec.Command("/bin/bash", "./deploy_stack.sh", string(responseBody.Server.PublicNet.IPv4.IP), "eapi20240228124359")
 
