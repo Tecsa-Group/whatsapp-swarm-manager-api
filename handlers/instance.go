@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/felipe-tecsa/whatsapp-swarm-manager-api/models"
@@ -15,6 +16,59 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/mux"
 )
+
+func HandleProxy(w http.ResponseWriter, r *http.Request) {
+	path := removeLastItemAfterLastSlash(string(r.URL.Path))
+
+	switch r.Method {
+	case http.MethodGet:
+		switch path {
+		case "/instance/create":
+			ConnectionStateInstanceEvolution(w, r)
+		case "/instance/connect":
+			ConnectInstanceEvolution(w, r)
+		default:
+			http.NotFound(w, r)
+		}
+	case http.MethodPost:
+		switch path {
+		case "/instance":
+			CreateInstanceEvolution(w, r)
+		default:
+			http.NotFound(w, r)
+		}
+	case http.MethodDelete:
+		switch path {
+		case "/instance/logout":
+			LogoutInstanceEvolution(w, r)
+		case "/instance/delete":
+			DeleteInstanceEvolution(w, r)
+		default:
+			http.NotFound(w, r)
+		}
+	default:
+		// Método não suportado
+		http.Error(w, "Método não suportado", http.StatusMethodNotAllowed)
+	}
+}
+
+func removeLastItemAfterLastSlash(url string) string {
+	parts := strings.Split(url, "/") // Dividir a URL em partes usando a barra como separador
+	if len(parts) > 1 {
+		// Remover o último item da fatia de partes
+		parts = parts[:len(parts)-1]
+	}
+	// Juntar as partes novamente em uma string usando a barra como delimitador
+	return strings.Join(parts, "/")
+}
+
+func getLastItemAfterLastSlash(url string) string {
+	// Dividir a URL em partes usando a barra como separador
+	parts := strings.Split(url, "/")
+	// Obter o último elemento da fatia
+	lastItem := parts[len(parts)-1]
+	return lastItem
+}
 
 func GetAllInstances(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
@@ -174,7 +228,7 @@ func CreateInstanceEvolution(w http.ResponseWriter, r *http.Request) {
 	}
 	serverUrl, serverId := verifyServerAvailability()
 
-	url := serverUrl + "/instance/create"
+	url := serverUrl + r.URL.Path
 	payloadBytes, err := json.Marshal(payload)
 	if err != nil {
 		http.Error(w, "Erro ao codificar o payload:"+err.Error(), http.StatusInternalServerError)
@@ -233,7 +287,7 @@ func DeleteInstanceEvolution(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	instanceName := mux.Vars(r)["instanceName"]
+	instanceName := getLastItemAfterLastSlash(r.URL.Path)
 
 	// Verifique se o nome da instância não está vazio
 	if instanceName == "" {
@@ -256,7 +310,7 @@ func DeleteInstanceEvolution(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	url := serverUrl.URL + "/instance/delete/" + instanceName
+	url := serverUrl.URL + r.URL.Path
 	req, err := http.NewRequest("DELETE", url, nil)
 	if err != nil {
 		http.Error(w, "Erro ao criar a solicitação HTTP: "+err.Error(), http.StatusInternalServerError)
@@ -286,14 +340,14 @@ func DeleteInstanceEvolution(w http.ResponseWriter, r *http.Request) {
 	w.Write(body)
 }
 
-func LogoutInstanceEvolution(w http.ResponseWriter, r *http.Request) {
+func ConnectionStateInstanceEvolution(w http.ResponseWriter, r *http.Request) {
 	// Verifique se o método da solicitação é GET
-	if r.Method != http.MethodDelete {
+	if r.Method != http.MethodGet {
 		http.Error(w, "Método não permitido", http.StatusMethodNotAllowed)
 		return
 	}
 
-	instanceName := mux.Vars(r)["instanceName"]
+	instanceName := getLastItemAfterLastSlash(r.URL.Path)
 
 	// Verifique se o nome da instância não está vazio
 	if instanceName == "" {
@@ -316,7 +370,59 @@ func LogoutInstanceEvolution(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	url := serverUrl.URL + "/instance/logout/" + instanceName
+	url := serverUrl.URL + r.URL.Path
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		http.Error(w, "Erro ao criar a solicitação HTTP: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	req.Header.Set("apikey", os.Getenv("EVOLUTION_APIKEY"))
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		http.Error(w, "Erro ao enviar a solicitação HTTP: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		http.Error(w, "Erro ao ler a resposta da solicitação HTTP: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(resp.StatusCode)
+	w.Write(body)
+}
+
+func LogoutInstanceEvolution(w http.ResponseWriter, r *http.Request) {
+	instanceName := getLastItemAfterLastSlash(r.URL.Path)
+
+	// Verifique se o nome da instância não está vazio
+	if instanceName == "" {
+		http.Error(w, "Nome da instância não fornecido", http.StatusBadRequest)
+		return
+	}
+
+	serverUrl := models.UrlServer
+
+	error := models.DB.Table("servers").
+		Select("servers.url").
+		Joins("LEFT JOIN instances on servers.id = instances.server_id").
+		Where("instances.name = ?", instanceName).
+		Group("servers.url").
+		First(&serverUrl).
+		Error
+	if error != nil {
+		// Lidar com o erro
+		http.Error(w, "Servidor não encontrado", http.StatusNotFound)
+		return
+	}
+
+	url := serverUrl.URL + r.URL.Path
 	req, err := http.NewRequest("DELETE", url, nil)
 	if err != nil {
 		http.Error(w, "Erro ao criar a solicitação HTTP: "+err.Error(), http.StatusInternalServerError)
@@ -354,7 +460,7 @@ func ConnectInstanceEvolution(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Obtenha o nome da instância do path da solicitação
-	instanceName := mux.Vars(r)["instanceName"]
+	instanceName := getLastItemAfterLastSlash(r.URL.Path)
 
 	// Verifique se o nome da instância não está vazio
 	if instanceName == "" {
@@ -377,7 +483,7 @@ func ConnectInstanceEvolution(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	url := serverUrl.URL + "/instance/connect/" + instanceName
+	url := serverUrl.URL + r.URL.Path
 
 	// Cria a solicitação HTTP GET
 	req, err := http.NewRequest("GET", url, nil)
@@ -517,17 +623,3 @@ func verifyServerAvailability() (string, int) {
 
 	return servers[0].URL, servers[0].ID
 }
-
-// proximos passos criar um metodo q consome a api do guilherme
-// integrar com o metodo acima
-// utilizar o veridy em todos os metodos que utilizam a url do servidor do evolution
-// utilizar o iota para nomer os servidores
-// testar toda a api
-
-// responseCreateServer, err := CreateServerHetzner()
-// if err != nil {
-// 	return "error at CreateServerHetzner: " + err.Error()
-// }
-// // cria o servidor e com os valores retornados eu preencho e insiro no banco
-// serverIdGlobal = responseCreateServer.ID
-// return responseCreateServer.URL
