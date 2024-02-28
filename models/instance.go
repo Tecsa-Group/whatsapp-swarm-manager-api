@@ -34,3 +34,7 @@ type Result struct {
 	CountOpen int
 	ID        int
 }
+
+var UrlServer struct {
+	URL string `gorm:"column:url"`
+}

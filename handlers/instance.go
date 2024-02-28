@@ -7,6 +7,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/felipe-tecsa/whatsapp-swarm-manager-api/models"
@@ -191,7 +192,7 @@ func CreateInstanceEvolution(w http.ResponseWriter, r *http.Request) {
 
 	// Define os cabeçalhos da solicitação
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("apikey", "e1998e715164141382c8d44434629632")
+	req.Header.Set("apikey", os.Getenv("EVOLUTION_APIKEY"))
 
 	// Faz a solicitação HTTP
 	client := &http.Client{}
@@ -243,9 +244,22 @@ func ConnectInstanceEvolution(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	serverUrl, _ := verifyServerAvailability()
+	serverUrl := models.UrlServer
 
-	url := serverUrl + "/instance/connect/" + instanceName
+	error := models.DB.Table("servers").
+		Select("servers.url").
+		Joins("LEFT JOIN instances on servers.id = instances.server_id").
+		Where("instances.name = ?", instanceName).
+		Group("servers.url").
+		First(&serverUrl).
+		Error
+	if error != nil {
+		// Lidar com o erro
+		http.Error(w, "Servidor não encontrado", http.StatusNotFound)
+		return
+	}
+
+	url := serverUrl.URL + "/instance/connect/" + instanceName
 
 	// Cria a solicitação HTTP GET
 	req, err := http.NewRequest("GET", url, nil)
@@ -255,7 +269,7 @@ func ConnectInstanceEvolution(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Define o cabeçalho da chave de API
-	req.Header.Set("apikey", "e1998e715164141382c8d44434629632")
+	req.Header.Set("apikey", os.Getenv("EVOLUTION_APIKEY"))
 
 	// Faz a solicitação HTTP
 	client := &http.Client{}
@@ -311,7 +325,7 @@ func FetchInstances() ([]models.ServerInstance, error) {
 		}
 
 		// Adicione o cabeçalho "apikey" à solicitação
-		req.Header.Set("apikey", "e1998e715164141382c8d44434629632")
+		req.Header.Set("apikey", os.Getenv("EVOLUTION_APIKEY"))
 
 		// Faça a solicitação HTTP
 		resp, err := client.Do(req)
