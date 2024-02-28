@@ -215,11 +215,10 @@ func CreateServerHetzner() (models.Server, error) {
 	}
 	os.Setenv("ID_SERVER", strconv.Itoa(newServer.ID))
 
-	await := 20 * time.Second
+	await := 10 * time.Second
 	time.Sleep(await)
 
-	scriptPath := "./deploy_stack.sh"
-	cmd := exec.Command("/bin/sh", scriptPath, responseBody.Server.PublicNet.IPv4.IP, nameServer)
+	cmd := exec.Command("go", "run", "exec_script.go", responseBody.Server.PublicNet.IPv4.IP, nameServer)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
