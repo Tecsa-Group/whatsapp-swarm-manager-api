@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"reflect"
 	"strconv"
 	"time"
 
@@ -217,6 +218,7 @@ func CreateServerHetzner() (models.Server, error) {
 
 	await := 10 * time.Second
 	time.Sleep(await)
+	fmt.Println("typeof", reflect.TypeOf(responseBody.Server.PublicNet.IPv4.IP))
 	cmd := exec.Command("/bin/bash", "./deploy_stack.sh", "95.216.216.37", "eapi20240228124359")
 
 	// Definindo os canais de saída para os da aplicação
