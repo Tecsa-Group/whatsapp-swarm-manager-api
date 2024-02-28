@@ -286,6 +286,66 @@ func DeleteInstanceEvolution(w http.ResponseWriter, r *http.Request) {
 	w.Write(body)
 }
 
+func LogoutInstanceEvolution(w http.ResponseWriter, r *http.Request) {
+	// Verifique se o método da solicitação é GET
+	if r.Method != http.MethodDelete {
+		http.Error(w, "Método não permitido", http.StatusMethodNotAllowed)
+		return
+	}
+
+	instanceName := mux.Vars(r)["instanceName"]
+
+	// Verifique se o nome da instância não está vazio
+	if instanceName == "" {
+		http.Error(w, "Nome da instância não fornecido", http.StatusBadRequest)
+		return
+	}
+
+	serverUrl := models.UrlServer
+
+	error := models.DB.Table("servers").
+		Select("servers.url").
+		Joins("LEFT JOIN instances on servers.id = instances.server_id").
+		Where("instances.name = ?", instanceName).
+		Group("servers.url").
+		First(&serverUrl).
+		Error
+	if error != nil {
+		// Lidar com o erro
+		http.Error(w, "Servidor não encontrado", http.StatusNotFound)
+		return
+	}
+
+	url := serverUrl.URL + "/instance/logout/" + instanceName
+	req, err := http.NewRequest("DELETE", url, nil)
+	if err != nil {
+		http.Error(w, "Erro ao criar a solicitação HTTP: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	req.Header.Set("apikey", os.Getenv("EVOLUTION_APIKEY"))
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		http.Error(w, "Erro ao enviar a solicitação HTTP: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		http.Error(w, "Erro ao ler a resposta da solicitação HTTP: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	UpdateStatusInstance("name", instanceName, "close")
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(resp.StatusCode)
+	w.Write(body)
+}
+
 func ConnectInstanceEvolution(w http.ResponseWriter, r *http.Request) {
 	// Verifique se o método da solicitação é GET
 	if r.Method != http.MethodGet {
@@ -345,7 +405,7 @@ func ConnectInstanceEvolution(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	UpdateStatusInstance(instanceName, "open")
+	UpdateStatusInstance("name", instanceName, "open")
 
 	// Define o cabeçalho Content-Type na resposta
 	w.Header().Set("Content-Type", "application/json")
@@ -401,7 +461,7 @@ func FetchInstances() ([]models.ServerInstance, error) {
 		// Atualize o status das instâncias
 		for _, instance := range instances {
 			fmt.Print("instance", instance)
-			err := UpdateStatusInstance(instance.APIKey, instance.Status)
+			err := UpdateStatusInstance("apikey", instance.APIKey, instance.Status)
 			if err != nil {
 				// Lidar com o erro, se necessário
 				fmt.Println("Erro ao atualizar status da instância:", err)
@@ -415,9 +475,9 @@ func FetchInstances() ([]models.ServerInstance, error) {
 	return allInstances, nil
 }
 
-func UpdateStatusInstance(field string, status string) error {
+func UpdateStatusInstance(field string, fieldValue string, status string) error {
 	var instance models.Instance
-	result := models.DB.First(&instance, field)
+	result := models.DB.Where(field+" = ?", fieldValue).First(&instance)
 	if result.Error != nil {
 		return result.Error
 	}
@@ -439,6 +499,7 @@ func verifyServerAvailability() (string, int) {
 		Select("servers.url, servers.id, COUNT(instances.id) AS count_open").
 		Joins("LEFT JOIN instances ON servers.id = instances.server_id AND instances.status = ?", "open").
 		Group("servers.url, servers.id").
+		Order("count_open DESC").
 		Scan(&servers).Error
 
 	if err != nil {
