@@ -29,7 +29,7 @@ echo "test directory" $SERVER_USER@$SERVER_IP:$SERVER_DIR
 # ssh -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_IP
 
 echo "Copiando arquivo global_portainer.yaml para o servidor..."
-if ssh -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_IP; then
+if ssh -i /root/.ssh/id_rsa -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_IP; then
     echo "Comando SSH executado com sucesso."
 else
     exit_code=$?
