@@ -219,16 +219,16 @@ func CreateServerHetzner() (models.Server, error) {
 	time.Sleep(await)
 
 	scriptPath := "./deploy_stack.sh"
-	fmt.Println("ip", responseBody.Server.PublicNet.IPv4.IP)
 	cmd := exec.Command("/bin/sh", scriptPath, responseBody.Server.PublicNet.IPv4.IP, nameServer)
-	stdout, err := cmd.Output()
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	err = cmd.Run()
 	if err != nil {
-		fmt.Println("real error", string(stdout))
-		fmt.Println("Error in the output: ", err)
+		fmt.Println("Erro ao executar o script:", err)
 		return models.Server{}, err
 	}
 
-	fmt.Println(string(stdout))
 	return newServer, nil
 }
 
