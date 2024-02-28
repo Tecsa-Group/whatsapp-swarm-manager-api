@@ -32,4 +32,5 @@ type ServerInstance struct {
 type Result struct {
 	URL       string
 	CountOpen int
+	ID        int
 }

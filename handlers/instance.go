@@ -7,8 +7,6 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
-	"os"
-	"strconv"
 	"time"
 
 	"github.com/felipe-tecsa/whatsapp-swarm-manager-api/models"
@@ -175,8 +173,9 @@ func CreateInstanceEvolution(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Erro ao decodificar o corpo da solicitação JSON", http.StatusBadRequest)
 		return
 	}
+	serverUrl, serverId := verifyServerAvailability()
 
-	url := verifyServerAvailabity() + "/instance/create"
+	url := serverUrl + "/instance/create"
 	payloadBytes, err := json.Marshal(payload)
 	if err != nil {
 		http.Error(w, "Erro ao codificar o payload:"+err.Error(), http.StatusInternalServerError)
@@ -209,16 +208,11 @@ func CreateInstanceEvolution(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Erro ao ler a resposta da solicitação HTTP:"+err.Error(), http.StatusInternalServerError)
 		return
 	}
-	envValueStr := os.Getenv("ID_SERVER")
-	envValueInt, err := strconv.Atoi(envValueStr)
-	if err != nil {
-		fmt.Println("Erro ao converter variável de ambiente para inteiro:", err)
-	}
 
 	newInstance := models.Instance{
 		Name:     payload.InstanceName,
 		Status:   "connecting",
-		ServerID: envValueInt,
+		ServerID: serverId,
 		Apikey:   payload.Token,
 	}
 
@@ -249,7 +243,9 @@ func ConnectInstanceEvolution(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	url := verifyServerAvailabity() + ":8080/instance/connect/" + instanceName
+	serverUrl, _ := verifyServerAvailability()
+
+	url := serverUrl + "/instance/connect/" + instanceName
 
 	// Cria a solicitação HTTP GET
 	req, err := http.NewRequest("GET", url, nil)
@@ -363,15 +359,14 @@ func UpdateStatusInstance(field string, status string) error {
 	return nil
 }
 
-func verifyServerAvailabity() string {
+func verifyServerAvailability() (string, int) {
 	var servers []models.Result
 
 	// Realiza a consulta utilizando o GORM
-	err := models.DB.Table("servers s").
-		Select("s.url, COUNT(i.id) AS count_open").
-		Joins("LEFT JOIN instances i ON s.id = i.server_id").
-		Where("i.status = ?", "open").
-		Group("s.url").
+	err := models.DB.Table("servers").
+		Select("servers.url, servers.id, COUNT(instances.id) AS count_open").
+		Joins("LEFT JOIN instances ON servers.id = instances.server_id AND instances.status = ?", "open").
+		Group("servers.url, servers.id").
 		Scan(&servers).Error
 
 	if err != nil {
@@ -379,17 +374,15 @@ func verifyServerAvailabity() string {
 		fmt.Println("Erro ao executar a consulta:", err)
 	}
 
-	// if len(servers) <= 0 {
-	// 	return urlServer
-	// }
 	for _, server := range servers {
-		if server.CountOpen <= 20 {
-			return server.URL
+		if server.CountOpen <= 2 {
+			return server.URL, server.ID
 		}
 	}
+
 	go CreateServerHetzner()
 
-	return urlServer
+	return servers[0].URL, servers[0].ID
 }
 
 // proximos passos criar um metodo q consome a api do guilherme
