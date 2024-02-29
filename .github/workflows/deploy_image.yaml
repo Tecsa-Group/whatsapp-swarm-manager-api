@@ -18,15 +18,15 @@ jobs:
     - name: Build and push Docker image
       run: |
         docker build -t felipe070700/whatsapp-manager \
-          --build-arg PRIVATE_KEY="${{ secrets.PRIVATE_KEY }}" \
-          -e POSTGRES_HOST=${POSTGRES_HOST} \
-          -e POSTGRES_USER=${POSTGRES_USER} \
-          -e POSTGRES_PASSWORD=${POSTGRES_PASSWORD} \
-          -e POSTGRES_DB=${POSTGRES_DB} \
-          -e POSTGRES_PORT=${POSTGRES_PORT} \
-          -e CLOUDFLARE_API_TOKEN=${CLOUDFLARE_API_TOKEN} \
-          -e CLOUDFLARE_ZONE_ID=${CLOUDFLARE_ZONE_ID} \
-          -e EVOLUTION_APIKEY=${EVOLUTION_APIKEY} \
+        --build-arg PRIVATE_KEY="${{ secrets.PRIVATE_KEY }}" \
+        --build-arg POSTGRES_HOST="${{ secrets.POSTGRES_HOST }}" \
+        --build-arg POSTGRES_USER="${{ secrets.POSTGRES_USER }}" \
+        --build-arg POSTGRES_PASSWORD="${{ secrets.POSTGRES_PASSWORD }}" \
+        --build-arg POSTGRES_DB="${{ secrets.POSTGRES_DB }}" \
+        --build-arg POSTGRES_PORT="${{ secrets.POSTGRES_PORT }}" \
+        --build-arg CLOUDFLARE_API_TOKEN="${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+        --build-arg CLOUDFLARE_ZONE_ID="${{ secrets.CLOUDFLARE_ZONE_ID }}" \
+        --build-arg EVOLUTION_APIKEY="${{ secrets.EVOLUTION_APIKEY }}" \
           .
         docker push felipe070700/whatsapp-manager
 
