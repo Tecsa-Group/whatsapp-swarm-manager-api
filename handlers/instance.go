@@ -23,7 +23,7 @@ func HandleProxy(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
 		switch path {
-		case "/instance/create":
+		case "/instance/connectionState":
 			ConnectionStateInstanceEvolution(w, r)
 		case "/instance/connect":
 			ConnectInstanceEvolution(w, r)
@@ -46,26 +46,28 @@ func HandleProxy(w http.ResponseWriter, r *http.Request) {
 		default:
 			http.NotFound(w, r)
 		}
+	case http.MethodPut:
+		switch path {
+		case "/instance/restart":
+			LogoutInstanceEvolution(w, r)
+		default:
+			http.NotFound(w, r)
+		}
 	default:
-		// Método não suportado
 		http.Error(w, "Método não suportado", http.StatusMethodNotAllowed)
 	}
 }
 
 func removeLastItemAfterLastSlash(url string) string {
-	parts := strings.Split(url, "/") // Dividir a URL em partes usando a barra como separador
+	parts := strings.Split(url, "/")
 	if len(parts) > 1 {
-		// Remover o último item da fatia de partes
 		parts = parts[:len(parts)-1]
 	}
-	// Juntar as partes novamente em uma string usando a barra como delimitador
 	return strings.Join(parts, "/")
 }
 
 func getLastItemAfterLastSlash(url string) string {
-	// Dividir a URL em partes usando a barra como separador
 	parts := strings.Split(url, "/")
-	// Obter o último elemento da fatia
 	lastItem := parts[len(parts)-1]
 	return lastItem
 }
@@ -96,7 +98,6 @@ func GetInstance(w http.ResponseWriter, r *http.Request) {
 var validate *validator.Validate
 
 func CreateInstance(input models.Instance) error {
-	// Validação de entrada
 	validate := validator.New()
 	err := validate.Struct(input)
 	if err != nil {
@@ -153,7 +154,6 @@ func UpdateInstance(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Atualize apenas os campos que não estão vazios na entrada
 	if input.Name != "" {
 		instance.Name = input.Name
 	}
@@ -192,35 +192,24 @@ func DeleteInstance(w http.ResponseWriter, r *http.Request) {
 func GetInstancesByServerID(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	// Extrai o ID do servidor da solicitação
 	vars := mux.Vars(r)
 	serverID := vars["server_id"]
 
-	// Realiza a consulta no banco de dados para obter instâncias com o ID do servidor fornecido
 	var instances []models.Instance
 	if err := models.DB.Preload("Server").Where("server_id = ?", serverID).Find(&instances).Error; err != nil {
 		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to retrieve instances by server ID")
 		return
 	}
 
-	// Responde com as instâncias encontradas
 	json.NewEncoder(w).Encode(instances)
 }
 
 func CreateInstanceEvolution(w http.ResponseWriter, r *http.Request) {
-	// err := verifyServerAvailabity()
-	// if err != nil {
-	// 	http.Error(w, "Erro ao verificar a disponibilidade do servidor: "+err.Error(), http.StatusInternalServerError)
-	// 	return
-	// }
-
-	// Verifique se o método da solicitação é POST
 	if r.Method != http.MethodPost {
 		http.Error(w, "Método não permitido", http.StatusMethodNotAllowed)
 		return
 	}
 
-	// Decodifique o corpo da solicitação JSON em uma struct InstanceRequest
 	var payload models.InstanceRequest
 	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
 		http.Error(w, "Erro ao decodificar o corpo da solicitação JSON", http.StatusBadRequest)
@@ -235,18 +224,15 @@ func CreateInstanceEvolution(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Cria a solicitação HTTP POST com o payload JSON
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(payloadBytes))
 	if err != nil {
 		http.Error(w, "Erro ao criar a solicitação HTTP:"+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	// Define os cabeçalhos da solicitação
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("apikey", os.Getenv("EVOLUTION_APIKEY"))
 
-	// Faz a solicitação HTTP
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
@@ -255,7 +241,6 @@ func CreateInstanceEvolution(w http.ResponseWriter, r *http.Request) {
 	}
 	defer resp.Body.Close()
 
-	// Lê a resposta da solicitação
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		http.Error(w, "Erro ao ler a resposta da solicitação HTTP:"+err.Error(), http.StatusInternalServerError)
@@ -274,14 +259,12 @@ func CreateInstanceEvolution(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Erro ao criar a instância: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
-	// Escreve a resposta no corpo da resposta HTTP
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(resp.StatusCode)
 	w.Write(body)
 }
 
 func DeleteInstanceEvolution(w http.ResponseWriter, r *http.Request) {
-	// Verifique se o método da solicitação é GET
 	if r.Method != http.MethodDelete {
 		http.Error(w, "Método não permitido", http.StatusMethodNotAllowed)
 		return
@@ -289,28 +272,18 @@ func DeleteInstanceEvolution(w http.ResponseWriter, r *http.Request) {
 
 	instanceName := getLastItemAfterLastSlash(r.URL.Path)
 
-	// Verifique se o nome da instância não está vazio
 	if instanceName == "" {
 		http.Error(w, "Nome da instância não fornecido", http.StatusBadRequest)
 		return
 	}
 
-	serverUrl := models.UrlServer
-
-	error := models.DB.Table("servers").
-		Select("servers.url").
-		Joins("LEFT JOIN instances on servers.id = instances.server_id").
-		Where("instances.name = ?", instanceName).
-		Group("servers.url").
-		First(&serverUrl).
-		Error
+	serverUrl, error := findIntanceByIntanceName(instanceName)
 	if error != nil {
-		// Lidar com o erro
 		http.Error(w, "Servidor não encontrado", http.StatusNotFound)
 		return
 	}
 
-	url := serverUrl.URL + r.URL.Path
+	url := serverUrl + r.URL.Path
 	req, err := http.NewRequest("DELETE", url, nil)
 	if err != nil {
 		http.Error(w, "Erro ao criar a solicitação HTTP: "+err.Error(), http.StatusInternalServerError)
@@ -341,7 +314,6 @@ func DeleteInstanceEvolution(w http.ResponseWriter, r *http.Request) {
 }
 
 func ConnectionStateInstanceEvolution(w http.ResponseWriter, r *http.Request) {
-	// Verifique se o método da solicitação é GET
 	if r.Method != http.MethodGet {
 		http.Error(w, "Método não permitido", http.StatusMethodNotAllowed)
 		return
@@ -349,28 +321,18 @@ func ConnectionStateInstanceEvolution(w http.ResponseWriter, r *http.Request) {
 
 	instanceName := getLastItemAfterLastSlash(r.URL.Path)
 
-	// Verifique se o nome da instância não está vazio
 	if instanceName == "" {
 		http.Error(w, "Nome da instância não fornecido", http.StatusBadRequest)
 		return
 	}
 
-	serverUrl := models.UrlServer
-
-	error := models.DB.Table("servers").
-		Select("servers.url").
-		Joins("LEFT JOIN instances on servers.id = instances.server_id").
-		Where("instances.name = ?", instanceName).
-		Group("servers.url").
-		First(&serverUrl).
-		Error
+	serverUrl, error := findIntanceByIntanceName(instanceName)
 	if error != nil {
-		// Lidar com o erro
 		http.Error(w, "Servidor não encontrado", http.StatusNotFound)
 		return
 	}
 
-	url := serverUrl.URL + r.URL.Path
+	url := serverUrl + r.URL.Path
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		http.Error(w, "Erro ao criar a solicitação HTTP: "+err.Error(), http.StatusInternalServerError)
@@ -398,15 +360,7 @@ func ConnectionStateInstanceEvolution(w http.ResponseWriter, r *http.Request) {
 	w.Write(body)
 }
 
-func LogoutInstanceEvolution(w http.ResponseWriter, r *http.Request) {
-	instanceName := getLastItemAfterLastSlash(r.URL.Path)
-
-	// Verifique se o nome da instância não está vazio
-	if instanceName == "" {
-		http.Error(w, "Nome da instância não fornecido", http.StatusBadRequest)
-		return
-	}
-
+func findIntanceByIntanceName(instanceName string) (string, error) {
 	serverUrl := models.UrlServer
 
 	error := models.DB.Table("servers").
@@ -416,13 +370,72 @@ func LogoutInstanceEvolution(w http.ResponseWriter, r *http.Request) {
 		Group("servers.url").
 		First(&serverUrl).
 		Error
+
 	if error != nil {
-		// Lidar com o erro
+		return "", error
+	}
+	return serverUrl.URL, nil
+}
+
+func RestartInstanceEvolution(w http.ResponseWriter, r *http.Request) {
+	instanceName := getLastItemAfterLastSlash(r.URL.Path)
+
+	if instanceName == "" {
+		http.Error(w, "Nome da instância não fornecido", http.StatusBadRequest)
+		return
+	}
+
+	serverUrl, error := findIntanceByIntanceName(instanceName)
+	if error != nil {
 		http.Error(w, "Servidor não encontrado", http.StatusNotFound)
 		return
 	}
 
-	url := serverUrl.URL + r.URL.Path
+	url := serverUrl + r.URL.Path
+	req, err := http.NewRequest("DELETE", url, nil)
+	if err != nil {
+		http.Error(w, "Erro ao criar a solicitação HTTP: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	req.Header.Set("apikey", os.Getenv("EVOLUTION_APIKEY"))
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		http.Error(w, "Erro ao enviar a solicitação HTTP: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		http.Error(w, "Erro ao ler a resposta da solicitação HTTP: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	UpdateStatusInstance("name", instanceName, "close")
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(resp.StatusCode)
+	w.Write(body)
+}
+
+func LogoutInstanceEvolution(w http.ResponseWriter, r *http.Request) {
+	instanceName := getLastItemAfterLastSlash(r.URL.Path)
+
+	if instanceName == "" {
+		http.Error(w, "Nome da instância não fornecido", http.StatusBadRequest)
+		return
+	}
+
+	serverUrl, error := findIntanceByIntanceName(instanceName)
+	if error != nil {
+		http.Error(w, "Servidor não encontrado", http.StatusNotFound)
+		return
+	}
+
+	url := serverUrl + r.URL.Path
 	req, err := http.NewRequest("DELETE", url, nil)
 	if err != nil {
 		http.Error(w, "Erro ao criar a solicitação HTTP: "+err.Error(), http.StatusInternalServerError)
@@ -453,49 +466,34 @@ func LogoutInstanceEvolution(w http.ResponseWriter, r *http.Request) {
 }
 
 func ConnectInstanceEvolution(w http.ResponseWriter, r *http.Request) {
-	// Verifique se o método da solicitação é GET
 	if r.Method != http.MethodGet {
 		http.Error(w, "Método não permitido", http.StatusMethodNotAllowed)
 		return
 	}
 
-	// Obtenha o nome da instância do path da solicitação
 	instanceName := getLastItemAfterLastSlash(r.URL.Path)
 
-	// Verifique se o nome da instância não está vazio
 	if instanceName == "" {
 		http.Error(w, "Nome da instância não fornecido", http.StatusBadRequest)
 		return
 	}
 
-	serverUrl := models.UrlServer
-
-	error := models.DB.Table("servers").
-		Select("servers.url").
-		Joins("LEFT JOIN instances on servers.id = instances.server_id").
-		Where("instances.name = ?", instanceName).
-		Group("servers.url").
-		First(&serverUrl).
-		Error
+	serverUrl, error := findIntanceByIntanceName(instanceName)
 	if error != nil {
-		// Lidar com o erro
 		http.Error(w, "Servidor não encontrado", http.StatusNotFound)
 		return
 	}
 
-	url := serverUrl.URL + r.URL.Path
+	url := serverUrl + r.URL.Path
 
-	// Cria a solicitação HTTP GET
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		http.Error(w, "Erro ao criar a solicitação HTTP: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	// Define o cabeçalho da chave de API
 	req.Header.Set("apikey", os.Getenv("EVOLUTION_APIKEY"))
 
-	// Faz a solicitação HTTP
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
@@ -504,8 +502,7 @@ func ConnectInstanceEvolution(w http.ResponseWriter, r *http.Request) {
 	}
 	defer resp.Body.Close()
 
-	// Lê o corpo da resposta
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		http.Error(w, "Erro ao ler a resposta da solicitação HTTP: "+err.Error(), http.StatusInternalServerError)
 		return
@@ -513,13 +510,10 @@ func ConnectInstanceEvolution(w http.ResponseWriter, r *http.Request) {
 
 	UpdateStatusInstance("name", instanceName, "open")
 
-	// Define o cabeçalho Content-Type na resposta
 	w.Header().Set("Content-Type", "application/json")
 
-	// Define o código de status da resposta HTTP com base no status da resposta recebida
 	w.WriteHeader(resp.StatusCode)
 
-	// Escreve o corpo da resposta no corpo da resposta HTTP
 	w.Write(body)
 }
 
@@ -531,7 +525,6 @@ func FetchInstances() ([]models.ServerInstance, error) {
 		Find(&servers).Error
 
 	if err != nil {
-		// Lidar com o erro
 		fmt.Println("Erro ao executar a consulta:", err)
 		return nil, err
 	}
@@ -542,39 +535,32 @@ func FetchInstances() ([]models.ServerInstance, error) {
 	for _, server := range servers {
 		client := &http.Client{}
 
-		// Crie uma solicitação HTTP GET
 		req, err := http.NewRequest("GET", server.URL+"/instance/fetchInstances", nil)
 		if err != nil {
 			return nil, err
 		}
 
-		// Adicione o cabeçalho "apikey" à solicitação
 		req.Header.Set("apikey", os.Getenv("EVOLUTION_APIKEY"))
 
-		// Faça a solicitação HTTP
 		resp, err := client.Do(req)
 		if err != nil {
 			return nil, err
 		}
 		defer resp.Body.Close()
 
-		// Decodifique os dados JSON da resposta
 		var instances []models.ServerInstance
 		if err := json.NewDecoder(resp.Body).Decode(&instances); err != nil {
 			return nil, err
 		}
 
-		// Atualize o status das instâncias
 		for _, instance := range instances {
 			fmt.Print("instance", instance)
 			err := UpdateStatusInstance("apikey", instance.APIKey, instance.Status)
 			if err != nil {
-				// Lidar com o erro, se necessário
 				fmt.Println("Erro ao atualizar status da instância:", err)
 			}
 		}
 
-		// Adicione as instâncias obtidas ao slice allInstances
 		allInstances = append(allInstances, instances...)
 	}
 
@@ -600,7 +586,6 @@ func UpdateStatusInstance(field string, fieldValue string, status string) error 
 func verifyServerAvailability() (string, int) {
 	var servers []models.Result
 
-	// Realiza a consulta utilizando o GORM
 	err := models.DB.Table("servers").
 		Select("servers.url, servers.id, COUNT(instances.id) AS count_open").
 		Joins("LEFT JOIN instances ON servers.id = instances.server_id AND instances.status = ?", "open").
@@ -609,7 +594,6 @@ func verifyServerAvailability() (string, int) {
 		Scan(&servers).Error
 
 	if err != nil {
-		// Lidar com o erro
 		fmt.Println("Erro ao executar a consulta:", err)
 	}
 

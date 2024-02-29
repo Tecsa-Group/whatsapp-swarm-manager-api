@@ -11,13 +11,14 @@ WORKDIR /app
 RUN mkdir -p /root/.ssh && \
     chmod 0700 /root/.ssh
 
-# Copie os arquivos id_rsa e id_rsa.pub do diretório ssh-keys local para o contêiner
-COPY ssh-keys/id_rsa /root/.ssh/id_rsa
-COPY ssh-keys/id_rsa.pub /root/.ssh/id_rsa.pub
+# Define um argumento para a chave privada
+ARG PRIVATE_KEY
+
+# Escreve o valor do argumento no arquivo id_rsa
+RUN echo "$PRIVATE_KEY" > /root/.ssh/id_rsa
 
 # Defina as permissões apropriadas para os arquivos
-RUN chmod 600 /root/.ssh/id_rsa && \
-    chmod 600 /root/.ssh/id_rsa.pub
+RUN chmod 600 /root/.ssh/id_rsa
 
 # Copie o arquivo go.mod e go.sum para baixar as dependências
 COPY go.mod go.sum ./
