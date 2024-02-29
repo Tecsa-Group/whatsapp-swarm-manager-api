@@ -206,7 +206,7 @@ func CreateServerHetzner() (models.Server, error) {
 		Name:      responseBody.Server.Name,
 		IP:        responseBody.Server.PublicNet.IPv4.IP,
 		CreatedAt: time.Now(),
-		URL:       "https://" + nameServer + ".shub.tech:8080",
+		URL:       "http://" + nameServer + ".shub.tech:8080",
 	}
 
 	if err := models.DB.Create(&newServer).Error; err != nil {
