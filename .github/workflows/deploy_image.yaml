@@ -26,14 +26,14 @@ jobs:
 
     - name: Export secrets as environment variables
       run: |
-        export POSTGRES_HOST=${{ secrets.POSTGRES_HOST }}
-        export POSTGRES_USER=${{ secrets.POSTGRES_USER }}
-        export POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
-        export POSTGRES_DB=${{ secrets.POSTGRES_DB }}
-        export POSTGRES_PORT=${{ secrets.POSTGRES_PORT }}
-        export CLOUDFLARE_API_TOKEN=${{ secrets.CLOUDFLARE_API_TOKEN }}
-        export CLOUDFLARE_ZONE_ID=${{ secrets.CLOUDFLARE_ZONE_ID }}
-        export EVOLUTION_APIKEY=${{ secrets.EVOLUTION_APIKEY }}
+        export POSTGRES_HOST="${POSTGRES_HOST}"
+        export POSTGRES_USER="${POSTGRES_USER}"
+        export POSTGRES_PASSWORD="${POSTGRES_PASSWORD}"
+        export POSTGRES_DB="${POSTGRES_DB}"
+        export POSTGRES_PORT="${POSTGRES_PORT}"
+        export CLOUDFLARE_API_TOKEN="${CLOUDFLARE_API_TOKEN}"
+        export CLOUDFLARE_ZONE_ID="${CLOUDFLARE_ZONE_ID}"
+        export EVOLUTION_APIKEY="${EVOLUTION_APIKEY}"
 
     - name: Build and push Docker image
       run: |
