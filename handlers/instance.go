@@ -529,6 +529,7 @@ func ConnectInstanceEvolution(w http.ResponseWriter, r *http.Request) {
 }
 
 func FetchInstances() {
+	fmt.Println("Start Cron")
 	var servers []models.Server
 
 	err := models.DB.Table("servers s").
@@ -547,7 +548,6 @@ func FetchInstances() {
 			fmt.Println("Erro ao criar requisição HTTP:", err)
 			continue // Continue para o próximo servidor em caso de erro na requisição
 		}
-		fmt.Print("url", server.URL)
 		req.Header.Set("apikey", os.Getenv("EVOLUTION_APIKEY"))
 
 		resp, err := client.Do(req)
@@ -572,6 +572,7 @@ func FetchInstances() {
 			}
 		}
 	}
+	fmt.Println("End Cron")
 }
 
 func DeleteAllInstances() {
