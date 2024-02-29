@@ -8,11 +8,14 @@ services:
     depends_on:
       - postgres
     environment:
-      POSTGRES_HOST: postgres
-      POSTGRES_USER: tecsagroup
-      POSTGRES_PASSWORD: tecsagroup
-      POSTGRES_DB: postgres_tecsagroup
-      POSTGRES_PORT: 5432
+      - POSTGRES_HOST=${{ secrets.POSTGRES_HOST }}
+      - POSTGRES_USER=${{ secrets.POSTGRES_USER }}
+      - POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
+      - POSTGRES_DB=${{ secrets.POSTGRES_DB }}
+      - POSTGRES_PORT=${{ secrets.POSTGRES_PORT }}
+      - CLOUDFLARE_API_TOKEN=${{ secrets.CLOUDFLARE_API_TOKEN }}
+      - CLOUDFLARE_ZONE_ID=${{ secrets.CLOUDFLARE_ZONE_ID }}
+      - EVOLUTION_APIKEY=${{ secrets.EVOLUTION_APIKEY }}
     networks:
       - evolution_network
     deploy:
