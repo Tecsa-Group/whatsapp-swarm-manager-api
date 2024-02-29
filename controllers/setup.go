@@ -8,7 +8,12 @@ import (
 )
 
 func New() http.Handler {
+
 	router := mux.NewRouter()
+	router.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}).Methods("GET")
+
 	router.PathPrefix("/").HandlerFunc(handlers.HandleProxy)
 	http.Handle("/", router)
 
@@ -28,10 +33,5 @@ func New() http.Handler {
 	// router.HandleFunc("/servers/{id}", handlers.GetServer).Methods("GET")
 	// router.HandleFunc("/servers/{id}", handlers.UpdateServer).Methods("PUT")
 	// router.HandleFunc("/servers/{id}", handlers.DeleteServer).Methods("DELETE")
-
-	router.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-	}).Methods("GET")
-
 	return router
 }
