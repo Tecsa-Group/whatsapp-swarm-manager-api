@@ -34,7 +34,7 @@ func main() {
 
 	// Configurar e iniciar a cron job
 	c := cron.New()
-	c.AddFunc("@every 1m", func() {
+	c.AddFunc("* * * * *", func() {
 		// Chamada da função FetchInstances a cada 10 minutos
 		go handlers.FetchInstances()
 	})
