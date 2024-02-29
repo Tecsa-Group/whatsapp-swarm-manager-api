@@ -19,6 +19,7 @@ import (
 
 func GetAllservers(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 
 	var servers []models.Server
 	models.DB.Find(&servers)
@@ -28,6 +29,7 @@ func GetAllservers(w http.ResponseWriter, r *http.Request) {
 
 func GetServer(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 
 	id := mux.Vars(r)["id"]
 	var server models.Server
@@ -69,6 +71,7 @@ type UpdateServerModel struct {
 
 func UpdateServer(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 
 	id := mux.Vars(r)["id"]
 	var server models.Server
@@ -118,6 +121,7 @@ func UpdateServer(w http.ResponseWriter, r *http.Request) {
 
 func DeleteServer(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 
 	id := mux.Vars(r)["id"]
 	var server models.Server

@@ -74,6 +74,7 @@ func getLastItemAfterLastSlash(url string) string {
 
 func GetAllInstances(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 
 	var intances []models.Instance
 	models.DB.Find(&intances)
@@ -83,6 +84,7 @@ func GetAllInstances(w http.ResponseWriter, r *http.Request) {
 
 func GetInstance(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 
 	id := mux.Vars(r)["id"]
 	var instance models.Instance
@@ -126,6 +128,7 @@ type UpdateInstanceModel struct {
 
 func UpdateInstance(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 
 	id := mux.Vars(r)["id"]
 	var instance models.Instance
@@ -174,6 +177,7 @@ func UpdateInstance(w http.ResponseWriter, r *http.Request) {
 
 func DeleteInstance(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 
 	id := mux.Vars(r)["id"]
 	var instance models.Instance
@@ -191,6 +195,7 @@ func DeleteInstance(w http.ResponseWriter, r *http.Request) {
 
 func GetInstancesByServerID(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 
 	vars := mux.Vars(r)
 	serverID := vars["server_id"]
@@ -224,7 +229,7 @@ func CreateInstanceEvolution(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(payloadBytes))
+	req, err := http.NewRequest(r.Method, url, bytes.NewBuffer(payloadBytes))
 	if err != nil {
 		http.Error(w, "Erro ao criar a solicitação HTTP:"+err.Error(), http.StatusInternalServerError)
 		return
@@ -260,6 +265,7 @@ func CreateInstanceEvolution(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.WriteHeader(resp.StatusCode)
 	w.Write(body)
 }
@@ -284,7 +290,7 @@ func DeleteInstanceEvolution(w http.ResponseWriter, r *http.Request) {
 	}
 
 	url := serverUrl + r.URL.Path
-	req, err := http.NewRequest("DELETE", url, nil)
+	req, err := http.NewRequest(r.Method, url, nil)
 	if err != nil {
 		http.Error(w, "Erro ao criar a solicitação HTTP: "+err.Error(), http.StatusInternalServerError)
 		return
@@ -309,6 +315,7 @@ func DeleteInstanceEvolution(w http.ResponseWriter, r *http.Request) {
 	models.DB.Table("instances").Where("instances.name = ?", instanceName).Delete(&models.Instance{})
 
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.WriteHeader(resp.StatusCode)
 	w.Write(body)
 }
@@ -333,7 +340,7 @@ func ConnectionStateInstanceEvolution(w http.ResponseWriter, r *http.Request) {
 	}
 
 	url := serverUrl + r.URL.Path
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequest(r.Method, url, nil)
 	if err != nil {
 		http.Error(w, "Erro ao criar a solicitação HTTP: "+err.Error(), http.StatusInternalServerError)
 		return
@@ -356,6 +363,7 @@ func ConnectionStateInstanceEvolution(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.WriteHeader(resp.StatusCode)
 	w.Write(body)
 }
@@ -392,7 +400,7 @@ func RestartInstanceEvolution(w http.ResponseWriter, r *http.Request) {
 	}
 
 	url := serverUrl + r.URL.Path
-	req, err := http.NewRequest("DELETE", url, nil)
+	req, err := http.NewRequest(r.Method, url, nil)
 	if err != nil {
 		http.Error(w, "Erro ao criar a solicitação HTTP: "+err.Error(), http.StatusInternalServerError)
 		return
@@ -417,6 +425,7 @@ func RestartInstanceEvolution(w http.ResponseWriter, r *http.Request) {
 	UpdateStatusInstance("name", instanceName, "close")
 
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.WriteHeader(resp.StatusCode)
 	w.Write(body)
 }
@@ -436,7 +445,7 @@ func LogoutInstanceEvolution(w http.ResponseWriter, r *http.Request) {
 	}
 
 	url := serverUrl + r.URL.Path
-	req, err := http.NewRequest("DELETE", url, nil)
+	req, err := http.NewRequest(r.Method, url, nil)
 	if err != nil {
 		http.Error(w, "Erro ao criar a solicitação HTTP: "+err.Error(), http.StatusInternalServerError)
 		return
@@ -461,6 +470,7 @@ func LogoutInstanceEvolution(w http.ResponseWriter, r *http.Request) {
 	UpdateStatusInstance("name", instanceName, "close")
 
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.WriteHeader(resp.StatusCode)
 	w.Write(body)
 }
@@ -486,7 +496,7 @@ func ConnectInstanceEvolution(w http.ResponseWriter, r *http.Request) {
 
 	url := serverUrl + r.URL.Path
 
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequest(r.Method, url, nil)
 	if err != nil {
 		http.Error(w, "Erro ao criar a solicitação HTTP: "+err.Error(), http.StatusInternalServerError)
 		return
@@ -511,6 +521,7 @@ func ConnectInstanceEvolution(w http.ResponseWriter, r *http.Request) {
 	UpdateStatusInstance("name", instanceName, "open")
 
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 
 	w.WriteHeader(resp.StatusCode)
 
