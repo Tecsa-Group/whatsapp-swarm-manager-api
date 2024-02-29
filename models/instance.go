@@ -18,17 +18,6 @@ type InstanceRequest struct {
 	QRCode       bool   `json:"qrcode"`
 }
 
-type ServerInstance struct {
-	InstanceName      string `json:"instanceName"`
-	Owner             string `json:"owner"`
-	ProfileName       string `json:"profileName"`
-	ProfilePictureURL string `json:"profilePictureUrl"`
-	ProfileStatus     string `json:"profileStatus"`
-	Status            string `json:"status"`
-	ServerURL         string `json:"serverUrl"`
-	APIKey            string `json:"apikey"`
-}
-
 type Result struct {
 	URL       string
 	CountOpen int
@@ -37,4 +26,15 @@ type Result struct {
 
 var UrlServer struct {
 	URL string `gorm:"column:url"`
+}
+
+type InstanceByEvolution struct {
+	InstanceName string `json:"instanceName"`
+	Status       string `json:"status"`
+	ServerUrl    string `json:"serverUrl"`
+	ApiKey       string `json:"apikey"`
+}
+
+type ServerInstance struct {
+	Instance InstanceByEvolution `json:"instance"`
 }

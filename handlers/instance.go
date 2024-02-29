@@ -528,7 +528,7 @@ func ConnectInstanceEvolution(w http.ResponseWriter, r *http.Request) {
 	w.Write(body)
 }
 
-func FetchInstances() ([]models.ServerInstance, error) {
+func FetchInstances() {
 	var servers []models.Server
 
 	err := models.DB.Table("servers s").
@@ -537,45 +537,95 @@ func FetchInstances() ([]models.ServerInstance, error) {
 
 	if err != nil {
 		fmt.Println("Erro ao executar a consulta:", err)
-		return nil, err
 	}
-
-	var allInstances []models.ServerInstance
-	fmt.Print("servers", servers)
 
 	for _, server := range servers {
 		client := &http.Client{}
 
 		req, err := http.NewRequest("GET", server.URL+"/instance/fetchInstances", nil)
 		if err != nil {
-			return nil, err
+			fmt.Println("Erro ao criar requisição HTTP:", err)
+			continue // Continue para o próximo servidor em caso de erro na requisição
 		}
-
+		fmt.Print("url", server.URL)
 		req.Header.Set("apikey", os.Getenv("EVOLUTION_APIKEY"))
 
 		resp, err := client.Do(req)
 		if err != nil {
-			return nil, err
+			fmt.Println("Erro ao fazer requisição HTTP:", err)
+			continue // Continue para o próximo servidor em caso de erro na requisição
 		}
 		defer resp.Body.Close()
 
 		var instances []models.ServerInstance
 		if err := json.NewDecoder(resp.Body).Decode(&instances); err != nil {
-			return nil, err
+			fmt.Println("Erro ao decodificar resposta JSON:", err)
+			continue // Continue para o próximo servidor em caso de erro na decodificação JSON
+		}
+		fmt.Print("instance", instances)
+
+		for _, instance := range instances {
+			err := UpdateStatusInstance("apikey", instance.Instance.ApiKey, instance.Instance.Status)
+			if err != nil {
+				fmt.Println("Erro ao atualizar status da instância:", err)
+				// Você pode decidir continuar para o próximo servidor ou retornar o erro, dependendo dos requisitos do seu aplicativo
+			}
+		}
+	}
+}
+
+func DeleteAllInstances() {
+	var servers []models.Server
+
+	err := models.DB.Table("servers s").
+		Distinct("s.url").
+		Find(&servers).Error
+
+	if err != nil {
+		fmt.Println("Erro ao executar a consulta:", err)
+	}
+
+	for _, server := range servers {
+		client := &http.Client{}
+
+		req, err := http.NewRequest("GET", server.URL+"/instance/fetchInstances", nil)
+		if err != nil {
+			fmt.Println("Erro ao criar requisição HTTP:", err)
+			continue // Continue para o próximo servidor em caso de erro na requisição
+		}
+		fmt.Print("url", server.URL)
+		req.Header.Set("apikey", os.Getenv("EVOLUTION_APIKEY"))
+
+		resp, err := client.Do(req)
+		if err != nil {
+			fmt.Println("Erro ao fazer requisição HTTP:", err)
+			continue // Continue para o próximo servidor em caso de erro na requisição
+		}
+		defer resp.Body.Close()
+
+		var instances []models.ServerInstance
+		if err := json.NewDecoder(resp.Body).Decode(&instances); err != nil {
+			fmt.Println("Erro ao decodificar resposta JSON:", err)
+			go FetchInstances()
+			return // Continue para o próximo servidor em caso de erro na decodificação JSON
 		}
 
 		for _, instance := range instances {
-			fmt.Print("instance", instance)
-			err := UpdateStatusInstance("apikey", instance.APIKey, instance.Status)
+			replaced := strings.Replace(instance.Instance.InstanceName, " ", "%20", -1)
+			fmt.Println("replaced", replaced)
+			url := server.URL + "/instance/delete/" + replaced
+			req, _ := http.NewRequest("DELETE", url, nil)
+
+			req.Header.Set("apikey", os.Getenv("EVOLUTION_APIKEY"))
+
+			client := &http.Client{}
+			resp, err := client.Do(req)
 			if err != nil {
-				fmt.Println("Erro ao atualizar status da instância:", err)
+				fmt.Println("erro no delete request", err)
 			}
+			defer resp.Body.Close()
 		}
-
-		allInstances = append(allInstances, instances...)
 	}
-
-	return allInstances, nil
 }
 
 func UpdateStatusInstance(field string, fieldValue string, status string) error {

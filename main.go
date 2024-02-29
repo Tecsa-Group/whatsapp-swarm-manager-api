@@ -5,8 +5,10 @@ import (
 	"net/http"
 
 	"github.com/felipe-tecsa/whatsapp-swarm-manager-api/controllers"
+	"github.com/felipe-tecsa/whatsapp-swarm-manager-api/handlers"
 	"github.com/felipe-tecsa/whatsapp-swarm-manager-api/models"
 	"github.com/joho/godotenv"
+	"gopkg.in/robfig/cron.v2"
 )
 
 func main() {
@@ -31,19 +33,12 @@ func main() {
 	}
 
 	// Configurar e iniciar a cron job
-	// c := cron.New()
-	// _, err = c.AddFunc("*/10 * * * *", func() {
-	// 	// Chamada da função FetchInstances a cada 10 minutos
-	// 	_, err := handlers.FetchInstances()
-	// 	if err != nil {
-	// 		fmt.Println("Erro ao executar FetchInstances:", err)
-	// 	}
-	// })
-	// if err != nil {
-	// 	fmt.Println("Erro ao configurar cron job:", err)
-	// 	return
-	// }
-	// c.Start()
+	c := cron.New()
+	c.AddFunc("@every 2m", func() {
+		// Chamada da função FetchInstances a cada 10 minutos
+		go handlers.FetchInstances()
+	})
+	c.Start()
 
 	// Iniciar o servidor HTTP
 	err = server.ListenAndServe()
