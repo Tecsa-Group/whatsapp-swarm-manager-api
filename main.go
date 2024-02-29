@@ -36,7 +36,7 @@ func main() {
 	c := cron.New()
 	c.AddFunc("@every 2m", func() {
 		// Chamada da função FetchInstances a cada 10 minutos
-		go handlers.FetchInstances()
+		handlers.FetchInstances()
 	})
 	c.Start()
 
