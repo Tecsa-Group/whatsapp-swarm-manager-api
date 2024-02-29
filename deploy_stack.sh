@@ -19,11 +19,7 @@ LOCAL_DIR="."  # Diretório do projeto
 # ssh-keygen -R "$SERVER_IP"
 echo "serverIp: "$SERVER_IP
 echo "domainName" $DOMAIN_NAME
-echo "dirName" $SERVER_DIR
 echo "Preparando diretório no servidor..."
-echo "connection"$SERVER_USER@$SERVER_IP
-echo "test directory" $SERVER_USER@$SERVER_IP:$SERVER_DIR
-# ssh -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_IP
 
 echo "Copiando arquivo global_portainer.yaml para o servidor..."
 ssh -i /root/.ssh/id_rsa -o StrictHostKeyChecking=no -l $SERVER_USER $SERVER_IP "pwd"
