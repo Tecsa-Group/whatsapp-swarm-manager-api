@@ -660,7 +660,7 @@ func verifyServerAvailability() (string, int) {
 	}
 	isFull := false
 	for _, server := range servers {
-		if server.CountOpen == 20 {
+		if server.CountOpen >= 20 {
 			isFull = true
 		} else {
 			isFull = false
