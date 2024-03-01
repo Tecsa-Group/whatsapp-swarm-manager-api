@@ -677,7 +677,7 @@ func verifyServerAvailability() (string, int) {
 			}
 		}
 	} else {
-		models.DB.Table("instances").Delete(&models.Instance{})
+		models.DB.Exec("DELETE FROM instances")
 		go DeleteAllInstances()
 	}
 
