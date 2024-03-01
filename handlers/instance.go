@@ -254,7 +254,7 @@ func CreateInstanceEvolution(w http.ResponseWriter, r *http.Request) {
 
 	newInstance := models.Instance{
 		Name:     payload.InstanceName,
-		Status:   "connecting",
+		Status:   "open",
 		ServerID: serverId,
 		Apikey:   payload.Token,
 	}
@@ -660,12 +660,13 @@ func verifyServerAvailability() (string, int) {
 	}
 
 	for _, server := range servers {
-		if server.CountOpen <= 2 {
+		if server.CountOpen == 10 {
+			go CreateServerHetzner()
+		}
+		if server.CountOpen <= 20 {
 			return server.URL, server.ID
 		}
 	}
-
-	go CreateServerHetzner()
 
 	return servers[0].URL, servers[0].ID
 }
