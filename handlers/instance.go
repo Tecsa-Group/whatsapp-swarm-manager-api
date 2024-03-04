@@ -658,27 +658,14 @@ func verifyServerAvailability() (string, int) {
 	if err != nil {
 		fmt.Println("Erro ao executar a consulta:", err)
 	}
-	isFull := false
-	for _, server := range servers {
-		if server.CountOpen >= 20 {
-			isFull = true
-		} else {
-			isFull = false
-		}
-	}
 
-	if !isFull {
-		for _, server := range servers {
-			// if server.CountOpen == 10 {
-			// 	go CreateServerHetzner()
-			// }
-			if server.CountOpen < 20 {
-				return server.URL, server.ID
-			}
+	for _, server := range servers {
+		if server.CountOpen == 10 {
+			go CreateServerHetzner()
 		}
-	} else {
-		models.DB.Exec("DELETE FROM instances")
-		go DeleteAllInstances()
+		if server.CountOpen < 20 {
+			return server.URL, server.ID
+		}
 	}
 
 	return servers[0].URL, servers[0].ID
